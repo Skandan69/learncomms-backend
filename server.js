@@ -22,8 +22,8 @@ const client = new OpenAI({
 /* =========================
    HEALTH CHECK (API ROOT)
 ========================= */
-app.get("/api", (_, res) => {
-  res.send("API OK");
+app.get("/", (req, res) => {
+  res.send("LearnComms Backend is running 🚀");
 });
 
 /* =========================
