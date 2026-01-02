@@ -9,17 +9,9 @@ const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/* =========================
-   AUDIO STORAGE (ISOLATED)
-========================= */
 const AUDIO_DIR = path.join(__dirname, "../audio-intonation");
-if (!fs.existsSync(AUDIO_DIR)) {
-  fs.mkdirSync(AUDIO_DIR);
-}
+if (!fs.existsSync(AUDIO_DIR)) fs.mkdirSync(AUDIO_DIR);
 
-/* =========================
-   SENTENCE INTONATION (PURE)
-========================= */
 router.post("/", async (req, res) => {
   try {
     const { sentence } = req.body;
@@ -40,8 +32,9 @@ router.post("/", async (req, res) => {
     const buffer = Buffer.from(await response.arrayBuffer());
     fs.writeFileSync(filepath, buffer);
 
+    // ✅ FIXED PATH
     res.json({
-      audio_url: `/audio-intonation/${filename}`
+      audio_url: `/api/audio-intonation/${filename}`
     });
 
   } catch (err) {
