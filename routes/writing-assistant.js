@@ -11,13 +11,14 @@ router.post("/", async (req, res) => {
   try {
     const { text, channel = "chat", tone = "neutral" } = req.body;
 
-    if (!text || typeof text !== "string") {
+    if (!text) {
       return res.status(400).json({ error: "Text is required" });
     }
 
     const prompt = `
 You are a professional workplace writing assistant.
 
+Task:
 Rewrite the message below into THREE different versions.
 
 Context:
@@ -34,18 +35,18 @@ ${text}
       temperature: 0.4
     });
 
-    const raw = response.choices[0].message.content || "";
+    const raw = response.choices[0].message.content.trim();
 
     const versions = raw
-      .split("\n")
-      .map(v => v.trim())
-      .filter(v => v.length > 5);
+      .split(/\n{2,}/)
+      .map(v => v.replace(/^Version \d+:\s*/i, "").trim())
+      .filter(Boolean);
 
     res.json({ versions });
 
   } catch (err) {
     console.error("WRITING ASSISTANT ERROR:", err);
-    res.status(500).json({ error: "Failed to generate content" });
+    res.status(500).json({ error: "Writing assistant failed" });
   }
 });
 
