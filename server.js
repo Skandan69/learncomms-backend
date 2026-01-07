@@ -219,6 +219,11 @@ ${text}
     res.status(500).json({ error: "Server error" });
   }
 });
+/* =========================
+   MESSAGE DECODER (NEW)
+========================= */
+app.use("/api/message-decode", require("./routes/message-decode"));
+app.use("/api/message-reply", require("./routes/message-reply"));
 
 /* =========================
    START SERVER (HOSTING SAFE)
@@ -228,4 +233,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
