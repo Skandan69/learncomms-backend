@@ -18,53 +18,34 @@ router.post("/", async (req, res) => {
     const prompt = `
 You are a professional workplace writing assistant.
 
-Task:
 Rewrite the message below into THREE different versions.
 
 Context:
 - Channel: ${channel}
 - Desired tone: ${tone}
 
-Rules:
-- Keep meaning intact
-- Sound natural and professional
-- Do NOT add explanations
-- Do NOT label one as best
-- Each version must be complete and usable
-
-Return EXACTLY this format:
-
-Version 1:
-<text>
-
-Version 2:
-<text>
-
-Version 3:
-<text>
-
 Message:
 ${text}
 `;
 
-    const completion = await client.chat.completions.create({
+    const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0.4
     });
 
-    const raw = completion.choices[0].message.content || "";
+    const raw = response.choices[0].message.content || "";
 
     const versions = raw
-      .split(/Version \d:/)
+      .split("\n")
       .map(v => v.trim())
-      .filter(Boolean);
+      .filter(v => v.length > 5);
 
     res.json({ versions });
 
   } catch (err) {
     console.error("WRITING ASSISTANT ERROR:", err);
-    res.status(500).json({ error: "Failed to generate writing suggestions" });
+    res.status(500).json({ error: "Failed to generate content" });
   }
 });
 
