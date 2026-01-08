@@ -25,7 +25,28 @@ Apply these emotional handling techniques:
 ${emotionProfile.modifiers.join(", ")}
 `;
 }
+// OPTIONAL USER OVERRIDES (SAFE)
+if (req.body.overrides?.softSkillIntent) {
+  prompt += `
+IMPORTANT RESPONSE STYLE GUIDANCE:
+The response should follow this instruction carefully:
+"${req.body.overrides.softSkillIntent}"
+`;
+}
 
+if (req.body.overrides?.emotionIntent) {
+  prompt += `
+USER CONTEXT:
+"${req.body.overrides.emotionIntent}"
+`;
+}
+
+if (req.body.overrides?.roleIntent) {
+  prompt += `
+ROLE CONTEXT:
+"${req.body.overrides.roleIntent}"
+`;
+}
 /* =========================
    HELPER: Response Parser
 ========================= */
