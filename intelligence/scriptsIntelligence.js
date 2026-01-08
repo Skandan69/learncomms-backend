@@ -250,4 +250,63 @@ followUpCall: {
       }
     }
   }
+/* =========================
+   OBJECTION HANDLING
+========================= */
+objectionHandling: {
+  default: {
+    coreSkills: [
+      "active listening",
+      "empathy",
+      "reframing",
+      "calm persuasion"
+    ],
+    strategyBalance: {
+      empathy: 0.5,
+      persuasion: 0.4,
+      authority: 0.1
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "emotional validation",
+      "reassurance",
+      "de-escalation",
+      "solution framing"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.3,
+      authority: 0.1
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "confidence",
+      "value justification",
+      "trust building",
+      "controlled persuasion"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.5,
+      authority: 0.2
+    }
+  },
+
+  retention: {
+    coreSkills: [
+      "empathy",
+      "commitment reassurance",
+      "benefit reinforcement"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.3,
+      authority: 0.1
+    }
+  }
+}
 };
