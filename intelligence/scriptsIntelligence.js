@@ -90,3 +90,48 @@ module.exports = {
     }
   }
 };
+  /* =========================
+     CALL HOLD / PAUSE
+  ========================= */
+  callHold: {
+    default: {
+      coreSkills: [
+        "politeness",
+        "expectation setting",
+        "reassurance",
+        "clarity"
+      ],
+      strategyBalance: {
+        empathy: 0.5,
+        persuasion: 0.1,
+        authority: 0.4
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "reassurance",
+        "time transparency",
+        "calm tone"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.1,
+        authority: 0.3
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "professional control",
+        "process explanation"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.1,
+        authority: 0.6
+      }
+    }
+  },
