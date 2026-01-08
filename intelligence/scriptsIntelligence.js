@@ -88,8 +88,8 @@ module.exports = {
         authority: 0.3
       }
     }
-  }
-};
+  },
+
   /* =========================
      CALL HOLD / PAUSE
   ========================= */
@@ -134,4 +134,5 @@ module.exports = {
         authority: 0.6
       }
     }
-  },
+  }
+};
