@@ -1,79 +1,73 @@
 const express = require("express");
-const router = express.Router();
 const OpenAI = require("openai");
+const scriptsIntelligence = require("../intelligence/scriptsIntelligence");
+
+const router = express.Router();
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+/* ======================================================
+   SCRIPTS V1 — CALL OPENING (INTELLIGENCE DRIVEN)
+====================================================== */
 router.post("/call-opening", async (req, res) => {
   try {
+    const {
+      category = "callOpening",
+      type = "default"
+    } = req.body;
+
+    // 🧠 Load intelligence safely
+    const intelligence =
+      scriptsIntelligence?.[category]?.[type] ||
+      scriptsIntelligence?.[category]?.default;
+
+    if (!intelligence) {
+      return res.status(400).json({ error: "Invalid script configuration" });
+    }
+
     const prompt = `
-You are an expert workplace communication coach.
+You are a workplace communication trainer.
 
-Generate THREE DIFFERENT call opening scripts for a CUSTOMER SUPPORT phone call.
+Generate ONE professional CALL OPENING script.
 
-Each script must follow a different communication strategy:
+Apply these core soft skills:
+${intelligence.coreSkills.join(", ")}
 
-SCRIPT A — Empathy-first:
-- Warm, calming, emotionally validating
-- Reassures the caller
-- Reduces tension immediately
+Soft-skill balance to maintain:
+Empathy level: ${intelligence.strategyBalance.empathy}
+Persuasion level: ${intelligence.strategyBalance.persuasion}
+Authority level: ${intelligence.strategyBalance.authority}
 
-SCRIPT B — Balanced professional:
-- Neutral, clear, confident
-- Standard professional tone
-- Safe for any workplace
-
-SCRIPT C — Confident & persuasive:
-- Confident, authoritative but polite
-- Builds trust and credibility
-- Leads the conversation forward
-
-STRICT RULES:
-- Spoken English only
-- 1–2 sentences per script
+Rules:
+- Spoken English
+- Polite, calm, confident
+- 1–2 sentences only
+- Neutral global English
+- Human, non-robotic
 - No placeholders
 - No emojis
 - No explanations
-- Output ONLY the scripts
 
-FORMAT EXACTLY LIKE THIS:
-
-SCRIPT A:
-<text>
-
-SCRIPT B:
-<text>
-
-SCRIPT C:
-<text>
+Return ONLY the script text.
 `;
 
     const response = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.5
+      temperature: 0.4
     });
 
-    const content = response.choices[0].message.content;
-
-    const extract = (label) => {
-      const match = content.match(
-        new RegExp(`${label}:([\\s\\S]*?)(?=SCRIPT [ABC]:|$)`)
-      );
-      return match ? match[1].trim() : "";
-    };
+    const script = response.choices[0].message.content.trim();
 
     res.json({
-      primary: extract("SCRIPT A"),
-      alternative1: extract("SCRIPT B"),
-      alternative2: extract("SCRIPT C")
+      primary: script
     });
 
-  } catch (err) {
-    console.error("SCRIPT GENERATION ERROR:", err);
-    res.status(500).json({ error: "Failed to generate scripts" });
+  } catch (error) {
+    console.error("CALL OPENING SCRIPT ERROR:", error);
+    res.status(500).json({ error: "Failed to generate call opening script" });
   }
 });
 
