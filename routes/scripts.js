@@ -1,3 +1,4 @@
+console.log("INTELLIGENCE LOADED:", Object.keys(scriptsIntelligence || {}));
 const express = require("express");
 const OpenAI = require("openai");
 const scriptsIntelligence = require("../intelligence/scriptsIntelligence");
