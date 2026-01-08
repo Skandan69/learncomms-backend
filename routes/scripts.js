@@ -1,4 +1,5 @@
 console.log("INTELLIGENCE LOADED:", Object.keys(scriptsIntelligence || {}));
+
 const express = require("express");
 const OpenAI = require("openai");
 const scriptsIntelligence = require("../intelligence/scriptsIntelligence");
@@ -25,28 +26,7 @@ Apply these emotional handling techniques:
 ${emotionProfile.modifiers.join(", ")}
 `;
 }
-// OPTIONAL USER OVERRIDES (SAFE)
-if (req.body.overrides?.softSkillIntent) {
-  prompt += `
-IMPORTANT RESPONSE STYLE GUIDANCE:
-The response should follow this instruction carefully:
-"${req.body.overrides.softSkillIntent}"
-`;
-}
 
-if (req.body.overrides?.emotionIntent) {
-  prompt += `
-USER CONTEXT:
-"${req.body.overrides.emotionIntent}"
-`;
-}
-
-if (req.body.overrides?.roleIntent) {
-  prompt += `
-ROLE CONTEXT:
-"${req.body.overrides.roleIntent}"
-`;
-}
 /* =========================
    HELPER: Response Parser
 ========================= */
@@ -56,6 +36,7 @@ function extractSection(raw, label) {
   );
   return match ? match[1].trim() : "";
 }
+
 /* ======================================================
    GENERIC SCRIPT HANDLER (REUSED)
 ====================================================== */
@@ -64,7 +45,8 @@ async function handleScript(req, res, options) {
     const {
       category,
       type = "default",
-      emotion
+      emotion,
+      overrides
     } = req.body;
 
     const intelligence =
@@ -77,7 +59,7 @@ async function handleScript(req, res, options) {
 
     const emotionInstructions = buildEmotionInstructions(emotion);
 
-    const prompt = `
+    let prompt = `
 You are a workplace communication trainer.
 
 ${options.intro}
@@ -91,7 +73,51 @@ Persuasion: ${intelligence.strategyBalance.persuasion}
 Authority: ${intelligence.strategyBalance.authority}
 
 ${emotionInstructions}
+`;
 
+    /* =========================
+       v1.5 — USER OVERRIDE PRIORITY
+    ========================= */
+    if (overrides) {
+      const { roleIntent, emotionIntent, softSkillIntent } = overrides;
+
+      prompt += `
+IMPORTANT:
+The user has provided specific context and expectations.
+These MUST be clearly reflected in the response (not implied).
+
+`;
+
+      if (roleIntent) {
+        prompt += `
+- Relationship / role context to acknowledge explicitly:
+"${roleIntent}"
+`;
+      }
+
+      if (emotionIntent) {
+        prompt += `
+- User situation or history to reference explicitly:
+"${emotionIntent}"
+`;
+      }
+
+      if (softSkillIntent) {
+        prompt += `
+- Communication style that MUST be demonstrated clearly:
+"${softSkillIntent}"
+`;
+      }
+
+      prompt += `
+Naturally weave these points into the response without sounding robotic.
+`;
+    }
+
+    /* =========================
+       RULES + OUTPUT FORMAT
+    ========================= */
+    prompt += `
 Rules:
 ${options.rules}
 
@@ -128,7 +154,7 @@ Alternative 2:
 }
 
 /* ======================================================
-   ROUTES
+   ROUTES (UNCHANGED)
 ====================================================== */
 
 router.post("/call-opening", (req, res) =>
