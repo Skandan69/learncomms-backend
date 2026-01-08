@@ -508,6 +508,90 @@ Alternative 2:
     res.status(500).json({ error: "Failed to generate objection handling scripts" });
   }
 });
+/* ======================================================
+   SCRIPTS — APOLOGY / RECOVERY (PRIMARY + ALTERNATIVES)
+====================================================== */
+router.post("/apology-recovery", async (req, res) => {
+  try {
+    const {
+      category = "apologyRecovery",
+      type = "default"
+    } = req.body;
+
+    const intelligence =
+      scriptsIntelligence?.[category]?.[type] ||
+      scriptsIntelligence?.[category]?.default;
+
+    if (!intelligence) {
+      return res.status(400).json({ error: "Invalid script configuration" });
+    }
+
+    const prompt = `
+You are a workplace communication trainer.
+
+Generate THREE DIFFERENT apology / recovery scripts.
+
+Script 1: Primary (empathetic & accountable)
+Script 2: Alternative (warmer & reassuring)
+Script 3: Alternative (confident & solution-focused)
+
+Apply these core soft skills:
+${intelligence.coreSkills.join(", ")}
+
+Soft-skill balance reference:
+Empathy: ${intelligence.strategyBalance.empathy}
+Persuasion: ${intelligence.strategyBalance.persuasion}
+Authority: ${intelligence.strategyBalance.authority}
+
+Rules:
+- Spoken, natural English
+- Take responsibility without blaming
+- Acknowledge inconvenience or mistake
+- Reassure corrective action
+- Each script: 1–2 sentences only
+- Neutral global English
+- No placeholders
+- No emojis
+- No explanations
+
+Return output in EXACT format:
+
+Primary:
+<text>
+
+Alternative 1:
+<text>
+
+Alternative 2:
+<text>
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4
+    });
+
+    const raw = response.choices[0].message.content;
+
+    const extract = (label) => {
+      const match = raw.match(
+        new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\w|$)`)
+      );
+      return match ? match[1].trim() : "";
+    };
+
+    res.json({
+      primary: extract("Primary"),
+      alternative1: extract("Alternative 1"),
+      alternative2: extract("Alternative 2")
+    });
+
+  } catch (error) {
+    console.error("APOLOGY RECOVERY SCRIPT ERROR:", error);
+    res.status(500).json({ error: "Failed to generate apology scripts" });
+  }
+});
 /* =========================
    EXPORT ROUTER (LAST LINE)
 ========================= */
