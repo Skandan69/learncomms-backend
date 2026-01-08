@@ -6,6 +6,9 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
+// ✅ ROUTE IMPORTS
+const scriptsRoutes = require("./routes/scripts");
+
 dotenv.config();
 
 const app = express();
@@ -20,17 +23,21 @@ const client = new OpenAI({
 });
 
 /* =========================
-   HEALTH CHECK (API ROOT)
+   HEALTH CHECK
 ========================= */
 app.get("/", (req, res) => {
   res.send("LearnComms Backend is running 🚀");
 });
 
 /* =========================
-   EXISTING INTONATION ROUTE
-   (PREFIXED WITH /api)
+   INTONATION ROUTE
 ========================= */
 app.use("/api/sentence-intonation", require("./routes/intonation"));
+
+/* =========================
+   ✅ SCRIPTS ROUTE (FIXED)
+========================= */
+app.use("/api/scripts", scriptsRoutes);
 
 /* =========================
    STATIC AUDIO (INTONATION)
@@ -41,7 +48,7 @@ app.use(
 );
 
 /* =========================
-   PRONUNCIATION TEXT (UNCHANGED)
+   PRONUNCIATION TEXT
 ========================= */
 async function generatePronunciation(word) {
   const prompt = `
@@ -78,7 +85,7 @@ Correct word: ${word}
 }
 
 /* =========================
-   PRONUNCIATION AUDIO (NEURAL)
+   PRONUNCIATION AUDIO
 ========================= */
 const AUDIO_PRON_DIR = path.join(__dirname, "audio-pronunciation");
 if (!fs.existsSync(AUDIO_PRON_DIR)) fs.mkdirSync(AUDIO_PRON_DIR);
@@ -90,7 +97,6 @@ async function generatePronunciationAudio(word) {
     crypto.createHash("md5").update(word.toLowerCase()).digest("hex") + ".mp3";
   const filepath = path.join(AUDIO_PRON_DIR, filename);
 
-  // ✅ Cache hit
   if (fs.existsSync(filepath)) {
     return `/api/audio-pronunciation/${filename}`;
   }
@@ -127,14 +133,13 @@ app.post("/api/pronunciation-audio", async (req, res) => {
 });
 
 /* =========================
-   MAIN API
+   MAIN PRONOUNCE API
 ========================= */
 app.post("/api/pronounce", async (req, res) => {
   try {
     const { text, mode } = req.body;
     if (!text) return res.status(400).json({ error: "Text required" });
 
-    /* ---------- SENTENCE CORRECTION ---------- */
     if (mode === "sentence") {
       const prompt = `
 You are an English language trainer.
@@ -171,7 +176,6 @@ Alternative correct sentence 2:
       return res.json({ result: r.choices[0].message.content.trim() });
     }
 
-    /* ---------- EMAIL ---------- */
     if (mode === "email") {
       const prompt = `
 You are an English communication trainer.
@@ -210,7 +214,6 @@ ${text}
       return res.json({ result: r.choices[0].message.content.trim() });
     }
 
-    /* ---------- PRONUNCIATION (TEXT ONLY) ---------- */
     const result = await generatePronunciation(text);
     return res.json({ result });
 
@@ -219,19 +222,18 @@ ${text}
     res.status(500).json({ error: "Server error" });
   }
 });
+
 /* =========================
-   MESSAGE DECODER (NEW)
+   MESSAGE DECODER
 ========================= */
 app.use("/api/message-decode", require("./routes/message-decode"));
 app.use("/api/message-reply", require("./routes/message-reply"));
 
 /* =========================
-   START SERVER (HOSTING SAFE)
+   START SERVER
 ========================= */
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
-
