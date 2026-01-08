@@ -1,4 +1,5 @@
 module.exports = {
+
   /* =========================
      CALL OPENING
   ========================= */
@@ -135,64 +136,66 @@ module.exports = {
       }
     }
   },
-/* =========================
-   FOLLOW-UP CALL
-========================= */
-followUpCall: {
-  default: {
-    coreSkills: [
-      "politeness",
-      "context recall",
-      "professional warmth",
-      "clarity"
-    ],
-    strategyBalance: {
-      empathy: 0.5,
-      persuasion: 0.3,
-      authority: 0.2
+
+  /* =========================
+     FOLLOW-UP CALL
+  ========================= */
+  followUpCall: {
+    default: {
+      coreSkills: [
+        "politeness",
+        "context recall",
+        "professional warmth",
+        "clarity"
+      ],
+      strategyBalance: {
+        empathy: 0.5,
+        persuasion: 0.3,
+        authority: 0.2
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "reassurance",
+        "active listening",
+        "service ownership"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.2,
+        authority: 0.2
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "confidence",
+        "value reinforcement",
+        "relationship building"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.5,
+        authority: 0.2
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "issue tracking",
+        "professional control"
+      ],
+      strategyBalance: {
+        empathy: 0.4,
+        persuasion: 0.1,
+        authority: 0.5
+      }
     }
   },
 
-  customerCare: {
-    coreSkills: [
-      "empathy",
-      "reassurance",
-      "active listening",
-      "service ownership"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.2,
-      authority: 0.2
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "confidence",
-      "value reinforcement",
-      "relationship building"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.5,
-      authority: 0.2
-    }
-  },
-
-  technicalSupport: {
-    coreSkills: [
-      "clarity",
-      "issue tracking",
-      "professional control"
-    ],
-    strategyBalance: {
-      empathy: 0.4,
-      persuasion: 0.1,
-      authority: 0.5
-    }
-  }
-},
   /* =========================
      CALL TRANSFER
   ========================= */
@@ -250,338 +253,348 @@ followUpCall: {
       }
     }
   },
+
   /* =========================
-   APOLOGY / RECOVERY
-========================= */
-apologyRecovery: {
-  default: {
-    coreSkills: [
-      "empathy",
-      "ownership",
-      "accountability",
-      "reassurance"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.2,
-      authority: 0.2
+     APOLOGY / RECOVERY
+  ========================= */
+  apologyRecovery: {
+    default: {
+      coreSkills: [
+        "empathy",
+        "ownership",
+        "accountability",
+        "reassurance"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.2,
+        authority: 0.2
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "emotional validation",
+        "calm reassurance",
+        "trust rebuilding"
+      ],
+      strategyBalance: {
+        empathy: 0.7,
+        persuasion: 0.1,
+        authority: 0.2
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "ownership",
+        "process explanation",
+        "confidence"
+      ],
+      strategyBalance: {
+        empathy: 0.4,
+        persuasion: 0.1,
+        authority: 0.5
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "empathy",
+        "relationship recovery",
+        "value reassurance"
+      ],
+      strategyBalance: {
+        empathy: 0.5,
+        persuasion: 0.3,
+        authority: 0.2
+      }
     }
   },
 
-  customerCare: {
-    coreSkills: [
-      "empathy",
-      "emotional validation",
-      "calm reassurance",
-      "trust rebuilding"
-    ],
-    strategyBalance: {
-      empathy: 0.7,
-      persuasion: 0.1,
-      authority: 0.2
-    }
-  },
-
-  technicalSupport: {
-    coreSkills: [
-      "clarity",
-      "ownership",
-      "process explanation",
-      "confidence"
-    ],
-    strategyBalance: {
-      empathy: 0.4,
-      persuasion: 0.1,
-      authority: 0.5
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "empathy",
-      "relationship recovery",
-      "value reassurance"
-    ],
-    strategyBalance: {
-      empathy: 0.5,
-      persuasion: 0.3,
-      authority: 0.2
-    }
-  }
-},
   /* =========================
-   DELAY HANDLING
-========================= */
-delayHandling: {
-  default: {
-    coreSkills: [
-      "empathy",
-      "expectation setting",
-      "transparency",
-      "reassurance"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.2,
-      authority: 0.2
+     DELAY HANDLING
+  ========================= */
+  delayHandling: {
+    default: {
+      coreSkills: [
+        "empathy",
+        "expectation setting",
+        "transparency",
+        "reassurance"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.2,
+        authority: 0.2
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "clear timelines",
+        "calm reassurance",
+        "trust maintenance"
+      ],
+      strategyBalance: {
+        empathy: 0.7,
+        persuasion: 0.1,
+        authority: 0.2
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "process explanation",
+        "expectation management"
+      ],
+      strategyBalance: {
+        empathy: 0.4,
+        persuasion: 0.1,
+        authority: 0.5
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "reassurance",
+        "value framing",
+        "relationship protection"
+      ],
+      strategyBalance: {
+        empathy: 0.4,
+        persuasion: 0.4,
+        authority: 0.2
+      }
     }
   },
 
-  customerCare: {
-    coreSkills: [
-      "empathy",
-      "clear timelines",
-      "calm reassurance",
-      "trust maintenance"
-    ],
-    strategyBalance: {
-      empathy: 0.7,
-      persuasion: 0.1,
-      authority: 0.2
-    }
-  },
-
-  technicalSupport: {
-    coreSkills: [
-      "clarity",
-      "process explanation",
-      "expectation management"
-    ],
-    strategyBalance: {
-      empathy: 0.4,
-      persuasion: 0.1,
-      authority: 0.5
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "reassurance",
-      "value framing",
-      "relationship protection"
-    ],
-    strategyBalance: {
-      empathy: 0.4,
-      persuasion: 0.4,
-      authority: 0.2
-    }
-  }
-},
-/* =========================
-   OBJECTION HANDLING
-========================= */
-objectionHandling: {
-  default: {
-    coreSkills: [
-      "active listening",
-      "empathy",
-      "reframing",
-      "calm persuasion"
-    ],
-    strategyBalance: {
-      empathy: 0.5,
-      persuasion: 0.4,
-      authority: 0.1
-    }
-  },
-
-  customerCare: {
-    coreSkills: [
-      "emotional validation",
-      "reassurance",
-      "de-escalation",
-      "solution framing"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.3,
-      authority: 0.1
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "confidence",
-      "value justification",
-      "trust building",
-      "controlled persuasion"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.5,
-      authority: 0.2
-    }
-  },
-
-  retention: {
-    coreSkills: [
-      "empathy",
-      "commitment reassurance",
-      "benefit reinforcement"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.3,
-      authority: 0.1
-    }
-  }
-},
   /* =========================
-   CHAT SUPPORT
-========================= */
-chatSupport: {
-  default: {
-    coreSkills: [
-      "clarity",
-      "politeness",
-      "responsiveness",
-      "concise reassurance"
-    ],
-    strategyBalance: {
-      empathy: 0.4,
-      persuasion: 0.2,
-      authority: 0.4
+     OBJECTION HANDLING
+  ========================= */
+  objectionHandling: {
+    default: {
+      coreSkills: [
+        "active listening",
+        "empathy",
+        "reframing",
+        "calm persuasion"
+      ],
+      strategyBalance: {
+        empathy: 0.5,
+        persuasion: 0.4,
+        authority: 0.1
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "emotional validation",
+        "reassurance",
+        "de-escalation",
+        "solution framing"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.3,
+        authority: 0.1
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "confidence",
+        "value justification",
+        "trust building",
+        "controlled persuasion"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.5,
+        authority: 0.2
+      }
+    },
+
+    retention: {
+      coreSkills: [
+        "empathy",
+        "commitment reassurance",
+        "benefit reinforcement"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.3,
+        authority: 0.1
+      }
     }
   },
 
-  customerCare: {
-    coreSkills: [
-      "empathy",
-      "friendly reassurance",
-      "quick acknowledgment"
-    ],
-    strategyBalance: {
-      empathy: 0.6,
-      persuasion: 0.1,
-      authority: 0.3
-    }
-  },
-
-  technicalSupport: {
-    coreSkills: [
-      "clarity",
-      "stepwise guidance",
-      "professional control"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.1,
-      authority: 0.6
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "confidence",
-      "value framing",
-      "friendly engagement"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.4,
-      authority: 0.3
-    }
-  }
-},
   /* =========================
-   EMAIL SCRIPTS
-========================= */
-emailScripts: {
-  default: {
-    coreSkills: [
-      "clarity",
-      "professional tone",
-      "structured communication",
-      "polite closure"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.3,
-      authority: 0.4
+     CHAT SUPPORT
+  ========================= */
+  chatSupport: {
+    default: {
+      coreSkills: [
+        "clarity",
+        "politeness",
+        "responsiveness",
+        "concise reassurance"
+      ],
+      strategyBalance: {
+        empathy: 0.4,
+        persuasion: 0.2,
+        authority: 0.4
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "friendly reassurance",
+        "quick acknowledgment"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
+        persuasion: 0.1,
+        authority: 0.3
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "stepwise guidance",
+        "professional control"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.1,
+        authority: 0.6
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "confidence",
+        "value framing",
+        "friendly engagement"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.4,
+        authority: 0.3
+      }
     }
   },
 
-  customerCare: {
-    coreSkills: [
-      "empathy",
-      "reassurance",
-      "clear explanation",
-      "trust maintenance"
-    ],
-    strategyBalance: {
-      empathy: 0.5,
-      persuasion: 0.2,
-      authority: 0.3
-    }
-  },
-
-  technicalSupport: {
-    coreSkills: [
-      "clarity",
-      "stepwise explanation",
-      "professional control"
-    ],
-    strategyBalance: {
-      empathy: 0.3,
-      persuasion: 0.1,
-      authority: 0.6
-    }
-  },
-
-  sales: {
-    coreSkills: [
-      "confidence",
-      "value framing",
-      "call-to-action clarity"
-    ],
-    strategyBalance: {
-      empathy: 0.2,
-      persuasion: 0.5,
-      authority: 0.3
-    }
-  }
-},
   /* =========================
-   EMOTIONAL STATES
-========================= */
-emotions: {
-  angry: {
-    modifiers: [
-      "de-escalation",
-      "acknowledge emotion first",
-      "lower authority tone",
-      "slow reassurance"
-    ],
-    toneGuidance: "Calm, steady, non-defensive. Acknowledge emotion before solution.",
-    strategyShift: {
-      empathyBoost: 0.2,
-      authorityReduce: 0.2
+     EMAIL SCRIPTS
+  ========================= */
+  emailScripts: {
+    default: {
+      coreSkills: [
+        "clarity",
+        "professional tone",
+        "structured communication",
+        "polite closure"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.3,
+        authority: 0.4
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "empathy",
+        "reassurance",
+        "clear explanation",
+        "trust maintenance"
+      ],
+      strategyBalance: {
+        empathy: 0.5,
+        persuasion: 0.2,
+        authority: 0.3
+      }
+    },
+
+    technicalSupport: {
+      coreSkills: [
+        "clarity",
+        "stepwise explanation",
+        "professional control"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.1,
+        authority: 0.6
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "confidence",
+        "value framing",
+        "call-to-action clarity"
+      ],
+      strategyBalance: {
+        empathy: 0.2,
+        persuasion: 0.5,
+        authority: 0.3
+      }
     }
   },
 
-  frustrated: {
-    modifiers: [
-      "acknowledge inconvenience",
-      "progress reassurance",
-      "expectation clarity"
-    ],
-    toneGuidance: "Supportive and solution-oriented. Show forward movement.",
-    strategyShift: {
-      empathyBoost: 0.1,
-      persuasionBoost: 0.1
-    }
-  },
+  /* =========================
+     EMOTIONAL STATES
+  ========================= */
+  emotions: {
+    angry: {
+      modifiers: [
+        "de-escalation",
+        "acknowledge emotion first",
+        "lower authority tone",
+        "slow reassurance"
+      ],
+      toneGuidance:
+        "Calm, steady, non-defensive. Acknowledge emotion before solution.",
+      strategyShift: {
+        empathyBoost: 0.2,
+        authorityReduce: 0.2
+      }
+    },
 
-  confused: {
-    modifiers: [
-      "simplify language",
-      "step-by-step clarity",
-      "avoid assumptions"
-    ],
-    toneGuidance: "Clear, patient, instructional. Remove ambiguity.",
-    strategyShift: {
-      authorityBoost: 0.1
+    frustrated: {
+      modifiers: [
+        "acknowledge inconvenience",
+        "progress reassurance",
+        "expectation clarity"
+      ],
+      toneGuidance:
+        "Supportive and solution-oriented. Show forward movement.",
+      strategyShift: {
+        empathyBoost: 0.1,
+        persuasionBoost: 0.1
+      }
+    },
+
+    confused: {
+      modifiers: [
+        "simplify language",
+        "step-by-step clarity",
+        "avoid assumptions"
+      ],
+      toneGuidance:
+        "Clear, patient, instructional. Remove ambiguity.",
+      strategyShift: {
+        authorityBoost: 0.1
+      }
     }
   }
-}
+
 };
