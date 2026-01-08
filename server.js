@@ -236,24 +236,27 @@ app.post("/api/writing-assistant", async (req, res) => {
       return res.status(400).json({ error: "Text is required" });
     }
 
-    const prompt = `
-You are a professional workplace writing assistant.
+const prompt = `
+You are a professional writing assistant.
 
 Task:
-Rewrite the message below into THREE clearly different versions.
+Based on the user's request, GENERATE THREE complete and usable message drafts.
+
+Instructions:
+- Understand the intent of the request
+- Do NOT rewrite the request sentence
+- Create full content the user can directly use
+- Each version must be meaningfully different
 
 Context:
 - Channel: ${channel}
 - Desired tone: ${tone}
 
-Rules:
-- Keep it professional
-- Clear and concise
-- Do not add explanations
-- Return only rewritten messages
-
-Message:
+User request:
 ${text}
+
+Return ONLY the three message drafts.
+Each draft on a new line.
 `;
 
     const response = await client.chat.completions.create({
@@ -283,4 +286,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
