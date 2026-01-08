@@ -540,5 +540,48 @@ emailScripts: {
       authority: 0.3
     }
   }
+},
+  /* =========================
+   EMOTIONAL STATES
+========================= */
+emotions: {
+  angry: {
+    modifiers: [
+      "de-escalation",
+      "acknowledge emotion first",
+      "lower authority tone",
+      "slow reassurance"
+    ],
+    toneGuidance: "Calm, steady, non-defensive. Acknowledge emotion before solution.",
+    strategyShift: {
+      empathyBoost: 0.2,
+      authorityReduce: 0.2
+    }
+  },
+
+  frustrated: {
+    modifiers: [
+      "acknowledge inconvenience",
+      "progress reassurance",
+      "expectation clarity"
+    ],
+    toneGuidance: "Supportive and solution-oriented. Show forward movement.",
+    strategyShift: {
+      empathyBoost: 0.1,
+      persuasionBoost: 0.1
+    }
+  },
+
+  confused: {
+    modifiers: [
+      "simplify language",
+      "step-by-step clarity",
+      "avoid assumptions"
+    ],
+    toneGuidance: "Clear, patient, instructional. Remove ambiguity.",
+    strategyShift: {
+      authorityBoost: 0.1
+    }
+  }
 }
 };
