@@ -35,7 +35,6 @@ function extractSection(raw, label) {
   );
   return match ? match[1].trim() : "";
 }
-
 /* ======================================================
    GENERIC SCRIPT HANDLER (REUSED)
 ====================================================== */
