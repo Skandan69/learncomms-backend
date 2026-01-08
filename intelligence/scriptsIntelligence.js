@@ -425,5 +425,62 @@ objectionHandling: {
       authority: 0.1
     }
   }
+},
+  /* =========================
+   CHAT SUPPORT
+========================= */
+chatSupport: {
+  default: {
+    coreSkills: [
+      "clarity",
+      "politeness",
+      "responsiveness",
+      "concise reassurance"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.2,
+      authority: 0.4
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "friendly reassurance",
+      "quick acknowledgment"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.1,
+      authority: 0.3
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "stepwise guidance",
+      "professional control"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.1,
+      authority: 0.6
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "confidence",
+      "value framing",
+      "friendly engagement"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.4,
+      authority: 0.3
+    }
+  }
 }
 };
