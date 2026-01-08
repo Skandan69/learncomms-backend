@@ -228,6 +228,52 @@ ${text}
 ========================= */
 app.use("/api/message-decode", require("./routes/message-decode"));
 app.use("/api/message-reply", require("./routes/message-reply"));
+app.post("/api/writing-assistant", async (req, res) => {
+  try {
+    const { text, channel = "chat", tone = "neutral" } = req.body;
+
+    if (!text || typeof text !== "string") {
+      return res.status(400).json({ error: "Text is required" });
+    }
+
+    const prompt = `
+You are a professional workplace writing assistant.
+
+Task:
+Rewrite the message below into THREE clearly different versions.
+
+Context:
+- Channel: ${channel}
+- Desired tone: ${tone}
+
+Rules:
+- Keep it professional
+- Clear and concise
+- Do not add explanations
+- Return only rewritten messages
+
+Message:
+${text}
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4
+    });
+
+    const content = response.choices[0].message.content
+      .split("\n")
+      .filter(Boolean)
+      .slice(0, 3);
+
+    res.json({ versions: content });
+
+  } catch (err) {
+    console.error("WRITING ASSISTANT ERROR:", err);
+    res.status(500).json({ error: "Writing assistant failed" });
+  }
+});
 
 /* =========================
    START SERVER
@@ -237,3 +283,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
