@@ -135,4 +135,61 @@ module.exports = {
       }
     }
   }
+},
+/* =========================
+   CALL TRANSFER
+========================= */
+callTransfer: {
+  default: {
+    coreSkills: [
+      "clarity",
+      "politeness",
+      "expectation setting",
+      "professional reassurance"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.2,
+      authority: 0.4
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "reassurance",
+      "smooth handoff explanation"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.1,
+      authority: 0.3
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "process explanation",
+      "confidence"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.1,
+      authority: 0.6
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "confidence",
+      "value framing",
+      "trust building"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.4,
+      authority: 0.3
+    }
+  }
 };
