@@ -1,8 +1,8 @@
-console.log("INTELLIGENCE LOADED:", Object.keys(scriptsIntelligence || {}));
-
 const express = require("express");
 const OpenAI = require("openai");
 const scriptsIntelligence = require("../intelligence/scriptsIntelligence");
+
+console.log("INTELLIGENCE LOADED:", Object.keys(scriptsIntelligence || {}));
 
 const router = express.Router();
 
@@ -60,7 +60,7 @@ async function handleScript(req, res, options) {
     const emotionInstructions = buildEmotionInstructions(emotion);
 
     let prompt = `
-You are a workplace communication trainer.
+You are a workplace communication trainer and customer communication coach.
 
 ${options.intro}
 
@@ -75,42 +75,48 @@ Authority: ${intelligence.strategyBalance.authority}
 ${emotionInstructions}
 `;
 
-    /* =========================
-       v1.5 — USER OVERRIDE PRIORITY
-    ========================= */
+    /* ======================================================
+       v1.6 — USER OVERRIDE INTERPRETATION (KEY UPGRADE)
+    ====================================================== */
     if (overrides) {
       const { roleIntent, emotionIntent, softSkillIntent } = overrides;
 
       prompt += `
-IMPORTANT:
-The user has provided specific context and expectations.
-These MUST be clearly reflected in the response (not implied).
+IMPORTANT CONTEXT FROM USER:
 
+The user has provided additional background and expectations.
+
+You MUST:
+- Adapt your language to suit the user's familiarity level
+- Acknowledge any repeated interactions or prior attempts
+- Adjust clarity, pace, and reassurance accordingly
+- Sound human, calm, and supportive — NOT corporate or policy-driven
 `;
 
       if (roleIntent) {
         prompt += `
-- Relationship / role context to acknowledge explicitly:
+User background / familiarity (adjust language and complexity accordingly):
 "${roleIntent}"
 `;
       }
 
       if (emotionIntent) {
         prompt += `
-- User situation or history to reference explicitly:
+User history or situation to acknowledge clearly:
 "${emotionIntent}"
 `;
       }
 
       if (softSkillIntent) {
         prompt += `
-- Communication style that MUST be demonstrated clearly:
+Desired communication style that MUST be clearly demonstrated:
 "${softSkillIntent}"
 `;
       }
 
       prompt += `
-Naturally weave these points into the response without sounding robotic.
+Naturally weave these points into the response.
+Do not list them. Do not sound scripted.
 `;
     }
 
