@@ -676,6 +676,89 @@ Alternative 2:
     res.status(500).json({ error: "Failed to generate delay handling scripts" });
   }
 });
+/* ======================================================
+   SCRIPTS — CHAT SUPPORT (PRIMARY + ALTERNATIVES)
+====================================================== */
+router.post("/chat-support", async (req, res) => {
+  try {
+    const {
+      category = "chatSupport",
+      type = "default"
+    } = req.body;
+
+    const intelligence =
+      scriptsIntelligence?.[category]?.[type] ||
+      scriptsIntelligence?.[category]?.default;
+
+    if (!intelligence) {
+      return res.status(400).json({ error: "Invalid script configuration" });
+    }
+
+    const prompt = `
+You are a workplace communication trainer.
+
+Generate THREE DIFFERENT chat support responses.
+
+Script 1: Primary (clear & professional)
+Script 2: Alternative (warmer & friendlier)
+Script 3: Alternative (confident & concise)
+
+Apply these core soft skills:
+${intelligence.coreSkills.join(", ")}
+
+Soft-skill balance reference:
+Empathy: ${intelligence.strategyBalance.empathy}
+Persuasion: ${intelligence.strategyBalance.persuasion}
+Authority: ${intelligence.strategyBalance.authority}
+
+Rules:
+- Chat-style language (not voice)
+- Short, clear sentences
+- Friendly but professional
+- No fillers or slang
+- Each script: 1–2 short sentences
+- Neutral global English
+- No emojis
+- No explanations
+
+Return output in EXACT format:
+
+Primary:
+<text>
+
+Alternative 1:
+<text>
+
+Alternative 2:
+<text>
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.35
+    });
+
+    const raw = response.choices[0].message.content;
+
+    const extract = (label) => {
+      const match = raw.match(
+        new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\w|$)`)
+      );
+      return match ? match[1].trim() : "";
+    };
+
+    res.json({
+      primary: extract("Primary"),
+      alternative1: extract("Alternative 1"),
+      alternative2: extract("Alternative 2")
+    });
+
+  } catch (error) {
+    console.error("CHAT SUPPORT SCRIPT ERROR:", error);
+    res.status(500).json({ error: "Failed to generate chat support scripts" });
+  }
+});
 /* =========================
    EXPORT ROUTER (LAST LINE)
 ========================= */
