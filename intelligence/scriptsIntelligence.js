@@ -250,6 +250,65 @@ followUpCall: {
       }
     }
   },
+  /* =========================
+   APOLOGY / RECOVERY
+========================= */
+apologyRecovery: {
+  default: {
+    coreSkills: [
+      "empathy",
+      "ownership",
+      "accountability",
+      "reassurance"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.2,
+      authority: 0.2
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "emotional validation",
+      "calm reassurance",
+      "trust rebuilding"
+    ],
+    strategyBalance: {
+      empathy: 0.7,
+      persuasion: 0.1,
+      authority: 0.2
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "ownership",
+      "process explanation",
+      "confidence"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.1,
+      authority: 0.5
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "empathy",
+      "relationship recovery",
+      "value reassurance"
+    ],
+    strategyBalance: {
+      empathy: 0.5,
+      persuasion: 0.3,
+      authority: 0.2
+    }
+  }
+},
 /* =========================
    OBJECTION HANDLING
 ========================= */
