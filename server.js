@@ -236,17 +236,20 @@ app.post("/api/writing-assistant", async (req, res) => {
       return res.status(400).json({ error: "Text is required" });
     }
 
-const prompt = `
+    const prompt = `
 You are a professional writing assistant.
 
 Task:
-Based on the user's request, GENERATE THREE complete and usable message drafts.
+Generate THREE complete and usable message drafts based on the user's request.
 
 Instructions:
 - Understand the intent of the request
 - Do NOT rewrite the request sentence
-- Create full content the user can directly use
-- Each version must be meaningfully different
+- Each version must be a FULL message (multiple lines allowed)
+- Each version must be clearly different in style
+- Do NOT split subject, greeting, and body across versions
+- Use proper formatting based on channel
+- Separate each version using this exact delimiter: ===VERSION===
 
 Context:
 - Channel: ${channel}
@@ -255,8 +258,18 @@ Context:
 User request:
 ${text}
 
-Return ONLY the three message drafts.
-Each draft on a new line.
+Return ONLY the drafts in this format:
+
+Version 1:
+<full message>
+
+===VERSION===
+Version 2:
+<full message>
+
+===VERSION===
+Version 3:
+<full message>
 `;
 
     const response = await client.chat.completions.create({
@@ -265,12 +278,14 @@ Each draft on a new line.
       temperature: 0.4
     });
 
-    const content = response.choices[0].message.content
-      .split("\n")
-      .filter(Boolean)
-      .slice(0, 3);
+    const raw = response.choices[0].message.content;
 
-    res.json({ versions: content });
+    const versions = raw
+      .split("===VERSION===")
+      .map(v => v.replace(/Version \d+:/i, "").trim())
+      .filter(Boolean);
+
+    res.json({ versions });
 
   } catch (err) {
     console.error("WRITING ASSISTANT ERROR:", err);
@@ -286,5 +301,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
