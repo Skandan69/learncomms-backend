@@ -309,6 +309,64 @@ apologyRecovery: {
     }
   }
 },
+  /* =========================
+   DELAY HANDLING
+========================= */
+delayHandling: {
+  default: {
+    coreSkills: [
+      "empathy",
+      "expectation setting",
+      "transparency",
+      "reassurance"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.2,
+      authority: 0.2
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "clear timelines",
+      "calm reassurance",
+      "trust maintenance"
+    ],
+    strategyBalance: {
+      empathy: 0.7,
+      persuasion: 0.1,
+      authority: 0.2
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "process explanation",
+      "expectation management"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.1,
+      authority: 0.5
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "reassurance",
+      "value framing",
+      "relationship protection"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.4,
+      authority: 0.2
+    }
+  }
+},
 /* =========================
    OBJECTION HANDLING
 ========================= */
