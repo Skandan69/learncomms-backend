@@ -424,6 +424,90 @@ Alternative 2:
     res.status(500).json({ error: "Failed to generate follow-up call scripts" });
   }
 });
+/* ======================================================
+   SCRIPTS — OBJECTION HANDLING (PRIMARY + ALTERNATIVES)
+====================================================== */
+router.post("/objection-handling", async (req, res) => {
+  try {
+    const {
+      category = "objectionHandling",
+      type = "default"
+    } = req.body;
+
+    const intelligence =
+      scriptsIntelligence?.[category]?.[type] ||
+      scriptsIntelligence?.[category]?.default;
+
+    if (!intelligence) {
+      return res.status(400).json({ error: "Invalid script configuration" });
+    }
+
+    const prompt = `
+You are a workplace communication trainer.
+
+Generate THREE DIFFERENT objection handling responses.
+
+Script 1: Primary (empathetic & balanced)
+Script 2: Alternative (calmer & reassuring)
+Script 3: Alternative (confident & persuasive)
+
+Apply these core soft skills:
+${intelligence.coreSkills.join(", ")}
+
+Soft-skill balance reference:
+Empathy: ${intelligence.strategyBalance.empathy}
+Persuasion: ${intelligence.strategyBalance.persuasion}
+Authority: ${intelligence.strategyBalance.authority}
+
+Rules:
+- Spoken English
+- Acknowledge the concern first
+- Respond without sounding defensive
+- Keep tone respectful and calm
+- Each script: 1–2 sentences only
+- Neutral global English
+- No placeholders
+- No emojis
+- No explanations
+
+Return output in EXACT format:
+
+Primary:
+<text>
+
+Alternative 1:
+<text>
+
+Alternative 2:
+<text>
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.5
+    });
+
+    const raw = response.choices[0].message.content;
+
+    const extract = (label) => {
+      const match = raw.match(
+        new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\w|$)`)
+      );
+      return match ? match[1].trim() : "";
+    };
+
+    res.json({
+      primary: extract("Primary"),
+      alternative1: extract("Alternative 1"),
+      alternative2: extract("Alternative 2")
+    });
+
+  } catch (error) {
+    console.error("OBJECTION HANDLING SCRIPT ERROR:", error);
+    res.status(500).json({ error: "Failed to generate objection handling scripts" });
+  }
+});
 /* =========================
    EXPORT ROUTER (LAST LINE)
 ========================= */
