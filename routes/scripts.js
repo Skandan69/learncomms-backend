@@ -759,6 +759,89 @@ Alternative 2:
     res.status(500).json({ error: "Failed to generate chat support scripts" });
   }
 });
+/* ======================================================
+   SCRIPTS — EMAIL (PRIMARY + ALTERNATIVES)
+====================================================== */
+router.post("/email-scripts", async (req, res) => {
+  try {
+    const {
+      category = "emailScripts",
+      type = "default"
+    } = req.body;
+
+    const intelligence =
+      scriptsIntelligence?.[category]?.[type] ||
+      scriptsIntelligence?.[category]?.default;
+
+    if (!intelligence) {
+      return res.status(400).json({ error: "Invalid script configuration" });
+    }
+
+    const prompt = `
+You are a workplace communication trainer.
+
+Generate THREE DIFFERENT professional email messages.
+
+Script 1: Primary (clear & professional)
+Script 2: Alternative (warmer & polite)
+Script 3: Alternative (confident & direct)
+
+Apply these core soft skills:
+${intelligence.coreSkills.join(", ")}
+
+Soft-skill balance reference:
+Empathy: ${intelligence.strategyBalance.empathy}
+Persuasion: ${intelligence.strategyBalance.persuasion}
+Authority: ${intelligence.strategyBalance.authority}
+
+Rules:
+- Professional email language
+- Clear opening and closing
+- No excessive formality
+- No placeholders
+- No emojis
+- Each script: short email body (3–5 lines)
+- Neutral global English
+- Do NOT add explanations
+
+Return output in EXACT format:
+
+Primary:
+<email body>
+
+Alternative 1:
+<email body>
+
+Alternative 2:
+<email body>
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.35
+    });
+
+    const raw = response.choices[0].message.content;
+
+    const extract = (label) => {
+      const match = raw.match(
+        new RegExp(`${label}:\\s*([\\s\\S]*?)(?=\\n\\w|$)`)
+      );
+      return match ? match[1].trim() : "";
+    };
+
+    res.json({
+      primary: extract("Primary"),
+      alternative1: extract("Alternative 1"),
+      alternative2: extract("Alternative 2")
+    });
+
+  } catch (error) {
+    console.error("EMAIL SCRIPT ERROR:", error);
+    res.status(500).json({ error: "Failed to generate email scripts" });
+  }
+});
 /* =========================
    EXPORT ROUTER (LAST LINE)
 ========================= */
