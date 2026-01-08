@@ -135,7 +135,64 @@ module.exports = {
       }
     }
   },
+/* =========================
+   FOLLOW-UP CALL
+========================= */
+followUpCall: {
+  default: {
+    coreSkills: [
+      "politeness",
+      "context recall",
+      "professional warmth",
+      "clarity"
+    ],
+    strategyBalance: {
+      empathy: 0.5,
+      persuasion: 0.3,
+      authority: 0.2
+    }
+  },
 
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "reassurance",
+      "active listening",
+      "service ownership"
+    ],
+    strategyBalance: {
+      empathy: 0.6,
+      persuasion: 0.2,
+      authority: 0.2
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "confidence",
+      "value reinforcement",
+      "relationship building"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.5,
+      authority: 0.2
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "issue tracking",
+      "professional control"
+    ],
+    strategyBalance: {
+      empathy: 0.4,
+      persuasion: 0.1,
+      authority: 0.5
+    }
+  }
+},
   /* =========================
      CALL TRANSFER
   ========================= */
