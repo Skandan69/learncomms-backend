@@ -1,4 +1,7 @@
 module.exports = {
+  /* =========================
+     CALL OPENING
+  ========================= */
   callOpening: {
     default: {
       coreSkills: [
@@ -30,29 +33,59 @@ module.exports = {
 
     sales: {
       coreSkills: [
-        "rapport building",
         "confidence",
-        "ethical persuasion",
-        "trust establishment"
+        "rapport building",
+        "value framing"
       ],
       strategyBalance: {
         empathy: 0.3,
         persuasion: 0.5,
         authority: 0.2
       }
-    },
+    }
+  },
 
-    technicalSupport: {
+  /* =========================
+     CALL CLOSING
+  ========================= */
+  callClosing: {
+    default: {
       coreSkills: [
-        "patience",
-        "clarity",
         "reassurance",
-        "competence signaling"
+        "gratitude",
+        "professional closure",
+        "confidence"
       ],
       strategyBalance: {
         empathy: 0.5,
+        persuasion: 0.2,
+        authority: 0.3
+      }
+    },
+
+    customerCare: {
+      coreSkills: [
+        "gratitude",
+        "emotional reassurance",
+        "next-step clarity"
+      ],
+      strategyBalance: {
+        empathy: 0.6,
         persuasion: 0.1,
-        authority: 0.4
+        authority: 0.3
+      }
+    },
+
+    sales: {
+      coreSkills: [
+        "confidence",
+        "positive reinforcement",
+        "future engagement"
+      ],
+      strategyBalance: {
+        empathy: 0.3,
+        persuasion: 0.4,
+        authority: 0.3
       }
     }
   }
