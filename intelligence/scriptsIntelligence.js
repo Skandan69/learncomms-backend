@@ -249,7 +249,7 @@ followUpCall: {
         authority: 0.3
       }
     }
-  }
+  },
 /* =========================
    OBJECTION HANDLING
 ========================= */
