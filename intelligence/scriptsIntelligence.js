@@ -482,5 +482,63 @@ chatSupport: {
       authority: 0.3
     }
   }
+},
+  /* =========================
+   EMAIL SCRIPTS
+========================= */
+emailScripts: {
+  default: {
+    coreSkills: [
+      "clarity",
+      "professional tone",
+      "structured communication",
+      "polite closure"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.3,
+      authority: 0.4
+    }
+  },
+
+  customerCare: {
+    coreSkills: [
+      "empathy",
+      "reassurance",
+      "clear explanation",
+      "trust maintenance"
+    ],
+    strategyBalance: {
+      empathy: 0.5,
+      persuasion: 0.2,
+      authority: 0.3
+    }
+  },
+
+  technicalSupport: {
+    coreSkills: [
+      "clarity",
+      "stepwise explanation",
+      "professional control"
+    ],
+    strategyBalance: {
+      empathy: 0.3,
+      persuasion: 0.1,
+      authority: 0.6
+    }
+  },
+
+  sales: {
+    coreSkills: [
+      "confidence",
+      "value framing",
+      "call-to-action clarity"
+    ],
+    strategyBalance: {
+      empathy: 0.2,
+      persuasion: 0.5,
+      authority: 0.3
+    }
+  }
 }
 };
