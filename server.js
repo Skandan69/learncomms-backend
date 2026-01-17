@@ -60,7 +60,7 @@ app.use(
 ========================= */
 async function generatePronunciation(word) {
   const prompt = `
-You are an English pronunciation coach.
+You are an English pronunciation and vocabulary coach.
 
 CRITICAL RULES:
 - Plain text only
@@ -70,16 +70,24 @@ CRITICAL RULES:
 - Alphabet-only pronunciation
 - Use hyphens to show syllables
 - Use FULL CAPITAL LETTERS for the stressed syllable
+- Keep Meaning simple (one short line)
+- Give ONE clear example sentence only
+- Give 4–6 synonyms only (comma-separated)
+- Do NOT add any extra fields
 
 FORMAT (EXACT):
+
+Part of speech: <noun/verb/adjective/adverb>
+Meaning: <simple meaning>
+Example: <one short example sentence>
+Synonyms: <comma-separated list>
 
 IPA: /.../
 Syllables: number
 Stress: number
 Correct pronunciation: alphabet-based pronunciation with hyphens and CAPS for stress
 Common mistakes: short phrase
-Why it happens: simple explanation
-Fix: simple habit correction
+
 Correct word: ${word}
 `;
 
@@ -489,6 +497,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
