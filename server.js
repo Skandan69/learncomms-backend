@@ -418,6 +418,68 @@ Return ONLY valid JSON in EXACT format:
     res.status(500).json({ error: "Speech scoring failed" });
   }
 });
+app.post("/api/scripts-assistant", async (req, res) => {
+  try {
+    const { text, channel = "call", tone = "neutral" } = req.body;
+
+    if (!text) {
+      return res.status(400).json({ error: "Text is required" });
+    }
+
+    const prompt = `
+You are a workplace communication trainer.
+
+Task:
+Generate THREE complete, usable professional scripts based on user's request.
+
+Context:
+- Channel: ${channel}
+- Tone: ${tone}
+
+Rules:
+- Suitable for customer support / workplace English
+- Clear, simple, natural spoken English
+- No placeholders
+- No emojis
+- No explanations
+- Each version must be different
+- If channel is email, include Subject + body
+
+User request:
+${text}
+
+Return ONLY this exact format:
+
+===VERSION===
+<message>
+
+===VERSION===
+<message>
+
+===VERSION===
+<message>
+`;
+
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.4
+    });
+
+    const raw = response.choices[0].message.content;
+
+    const versions = raw
+      .split("===VERSION===")
+      .map(v => v.trim())
+      .filter(Boolean);
+
+    return res.json({ versions });
+
+  } catch (err) {
+    console.error("SCRIPTS ASSISTANT ERROR:", err);
+    res.status(500).json({ error: "Scripts assistant failed" });
+  }
+});
 
 /* =========================
    START SERVER
@@ -427,6 +489,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
