@@ -5,6 +5,7 @@ const OpenAI = require("openai");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const multer = require("multer");
 
 // ✅ ROUTE IMPORTS
 const scriptsRoutes = require("./routes/scripts");
@@ -14,6 +15,13 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+/* =========================
+   MULTER (AUDIO UPLOAD)
+========================= */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 } // 15 MB limit
+});
 
 /* =========================
    OPENAI CLIENT
@@ -292,6 +300,124 @@ Version 3:
     res.status(500).json({ error: "Writing assistant failed" });
   }
 });
+/* =========================
+   SPEECH SCORING API
+========================= */
+app.post("/api/speech-score", upload.single("audio"), async (req, res) => {
+  try {
+    const { toFile } = require("openai");
+
+    const prompt = (req.body.prompt || "").trim();
+    const level = (req.body.level || "intermediate").trim();
+
+    if (!req.file) {
+      return res.status(400).json({ error: "Audio file is required" });
+    }
+
+    // ✅ Convert uploaded buffer into a file OpenAI can read
+    const audioFile = await toFile(req.file.buffer, "speech.webm");
+
+    // 1️⃣ Speech-to-text (Transcription)
+    const transcription = await client.audio.transcriptions.create({
+      file: audioFile,
+      model: "gpt-4o-mini-transcribe"
+    });
+
+    const transcript = (transcription.text || "").trim();
+
+    if (!transcript) {
+      return res.json({
+        transcript: "",
+        scores: {
+          overall: 0,
+          pronunciation: 0,
+          fluency: 0,
+          intonation: 0,
+          grammar: 0,
+          vocabulary: 0,
+          coherence: 0
+        },
+        strengths: [],
+        improvements: [
+          "Speech not detected clearly. Please record again in a quiet place."
+        ],
+        trainingPlan: [
+          "Record 40–60 seconds and speak slightly slower.",
+          "Avoid background noise.",
+          "Retry with clear pronunciation."
+        ]
+      });
+    }
+
+    // 2️⃣ Scoring + Feedback
+    const scoringPrompt = `
+You are an expert English speech evaluator.
+
+Evaluate the user’s spoken English based on the transcript.
+
+RULES:
+- Accent must NOT be penalized.
+- Evaluate only clarity/intelligibility, fluency, intonation, grammar, vocabulary, coherence.
+- Scores must be 0–10.
+- Be strict but fair.
+- Feedback must be practical for Indian learners / Tier 2-3 city learners.
+- No generic praise.
+
+User level: ${level}
+
+Optional speaking prompt:
+${prompt}
+
+Transcript:
+${transcript}
+
+Return ONLY valid JSON in EXACT format:
+
+{
+  "transcript": "",
+  "scores": {
+    "overall": 0,
+    "pronunciation": 0,
+    "fluency": 0,
+    "intonation": 0,
+    "grammar": 0,
+    "vocabulary": 0,
+    "coherence": 0
+  },
+  "strengths": ["...", "...", "..."],
+  "improvements": ["...", "...", "..."],
+  "trainingPlan": ["...", "...", "..."]
+}
+`;
+
+    const scoreRes = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: scoringPrompt }],
+      temperature: 0.2
+    });
+
+    const raw = scoreRes.choices[0].message.content.trim();
+
+    let output;
+    try {
+      output = JSON.parse(raw);
+    } catch (e) {
+      console.error("SPEECH SCORE JSON PARSE ERROR:", raw);
+      return res.status(500).json({
+        error: "Speech scoring failed due to formatting. Please try again."
+      });
+    }
+
+    // Always use real transcript
+    output.transcript = transcript;
+
+    return res.json(output);
+
+  } catch (err) {
+    console.error("SPEECH SCORING ERROR:", err);
+    res.status(500).json({ error: "Speech scoring failed" });
+  }
+});
 
 /* =========================
    START SERVER
@@ -301,6 +427,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
