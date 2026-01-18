@@ -4,6 +4,9 @@ const router = express.Router();
 const OpenAI = require("openai");
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+/* ===============================
+   HELPERS
+================================ */
 function sanitizeParamsForMode(paramsState, mode) {
   const modeObj = paramsState?.[mode] || {};
   const out = {
@@ -12,7 +15,6 @@ function sanitizeParamsForMode(paramsState, mode) {
     Process: Array.isArray(modeObj.Process) ? modeObj.Process : []
   };
 
-  // remove empty strings
   for (const k of Object.keys(out)) {
     out[k] = out[k].map(x => String(x || "").trim()).filter(Boolean);
   }
@@ -21,13 +23,21 @@ function sanitizeParamsForMode(paramsState, mode) {
 }
 
 function getRubricForParam(rubricsState, mode, paramName) {
-  // expected:
-  // rubricsState[mode][paramName] = { "5":"...", "4":"...", ... "1":"..." }
   const modeRubrics = rubricsState?.[mode] || {};
   const r = modeRubrics?.[paramName] || null;
   return r;
 }
 
+function norm(s) {
+  return String(s || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+}
+
+/* ===============================
+   ROUTE
+================================ */
 router.post("/qa-audit-text", async (req, res) => {
   try {
     const {
@@ -35,8 +45,6 @@ router.post("/qa-audit-text", async (req, res) => {
       text,
       evaluatorName,
       agentName,
-
-      // ✅ coming from audits.js
       paramsState,
       rubricsState
     } = req.body || {};
@@ -44,6 +52,7 @@ router.post("/qa-audit-text", async (req, res) => {
     if (!mode || !["call", "chat", "email"].includes(mode)) {
       return res.status(400).json({ error: "Invalid mode. Must be call/chat/email." });
     }
+
     if (!text || String(text).trim().length < 30) {
       return res.status(400).json({ error: "Text too short. Please paste complete transcript/chat/email." });
     }
@@ -51,19 +60,19 @@ router.post("/qa-audit-text", async (req, res) => {
     // Fallback params (if guide not sent)
     const fallbackParams = {
       call: {
-        Language: ["Grammar", "Fluency", "Pronunciation Clarity", "Vocabulary"],
-        "Soft Skills": ["Empathy", "Confidence", "Active Listening"],
-        Process: ["Greeting & Closing", "Resolution", "Compliance"]
+        Language: ["Grammar", "Fluency", "Pronunciation", "Vocabulary / Word choice"],
+        "Soft Skills": ["Empathy / Reassurance", "Active Listening", "Closing (recap + next steps + confirm resolution)"],
+        Process: ["Resolution accuracy", "Process adherence / compliance"]
       },
       chat: {
-        Language: ["Grammar", "Clarity", "Vocabulary"],
-        "Soft Skills": ["Empathy", "Professional Tone"],
-        Process: ["Resolution", "Ownership"]
+        Language: ["Grammar", "Sentence clarity (simple English)", "Tone / professional wording"],
+        "Soft Skills": ["Empathy & acknowledgement", "Ownership & accountability"],
+        Process: ["Resolution accuracy", "Documentation / internal notes quality"]
       },
       email: {
-        Language: ["Grammar", "Clarity", "Professional Writing"],
-        "Soft Skills": ["Tone", "Customer Friendliness"],
-        Process: ["Resolution", "Structure", "Next Steps"]
+        Language: ["Grammar accuracy", "Clarity & simplicity", "Tone in writing (polite positive)"],
+        "Soft Skills": ["Subject line quality", "Empathy / acknowledgement", "Closing & next steps"],
+        Process: ["Next Steps"]
       }
     };
 
@@ -84,8 +93,26 @@ router.post("/qa-audit-text", async (req, res) => {
       }
     }
 
+    // ✅ Build strict allowed list of params (WHITELIST)
+    const allowedParamsByCategory = {
+      Language: paramsForMode.Language || [],
+      "Soft Skills": paramsForMode["Soft Skills"] || [],
+      Process: paramsForMode.Process || []
+    };
+
+    const allowedAllParams = [
+      ...allowedParamsByCategory.Language,
+      ...allowedParamsByCategory["Soft Skills"],
+      ...allowedParamsByCategory.Process
+    ];
+
+    // map normalized -> exact param name
+    const allowedMap = {};
+    allowedAllParams.forEach(p => {
+      allowedMap[norm(p)] = p;
+    });
+
     // Build rubric bundle for current mode
-    // We give AI *exact score meaning* for every parameter (1-5)
     let rubricBundle = {};
     if (usingGuide && rubricsState && typeof rubricsState === "object") {
       for (const category of ["Language", "Soft Skills", "Process"]) {
@@ -99,15 +126,16 @@ router.post("/qa-audit-text", async (req, res) => {
     const SYSTEM = `
 You are a strict QA auditor for customer support communication.
 
-CRITICAL:
-- You MUST follow the provided parameters and rubrics only.
-- Score each parameter from 1 to 5.
-- Do not invent parameters.
-- Do not change rubric meaning.
-- Use evidence from the conversation/email.
-- Return valid JSON only (no markdown, no extra text).
-- If evidence is missing for a parameter, score conservatively (2 or 3) and explain why.
-- Avoid NA unless it is impossible to judge from text.
+ABSOLUTE RULES:
+1) You MUST score ONLY the provided parameters.
+2) You MUST use parameter names EXACTLY as given in the allowed list.
+   - Do not rename
+   - Do not shorten
+   - Do not reword
+3) Score each parameter from 1 to 5.
+4) Use evidence from the conversation/email.
+5) If evidence is missing, score conservatively (2 or 3) and explain why.
+6) Return valid JSON only.
 `;
 
     const USER = `
@@ -118,28 +146,30 @@ Agent Name: ${agentName || ""}
 Conversation/Email:
 ${text}
 
-Parameters:
-${JSON.stringify(paramsForMode, null, 2)}
+ALLOWED PARAMETERS BY CATEGORY (use these exact strings only):
+${JSON.stringify(allowedParamsByCategory, null, 2)}
 
-Rubrics (score meanings for parameters):
+RUBRICS:
 ${JSON.stringify(rubricBundle, null, 2)}
 
+OUTPUT REQUIREMENTS:
+- You must return parameterScores for ALL allowed parameters (no skipping).
+- Each parameter object must contain:
+  category, parameter, score, reason
+- "parameter" MUST EXACTLY match one string from the allowed list.
+
 Scoring rules:
-- Score each parameter: 1–5 (integer)
-- Provide a reason per parameter (1–2 lines, evidence-based)
-- Calculate category scores as percentage:
-  category% = (sum(scores)/ (count * 5)) * 100
-- Calculate finalScore:
-  finalScore% = (sum(all scores)/ (total count * 5)) * 100
+- category% = (sum(scores)/ (count * 5)) * 100
+- finalScore% = (sum(all scores)/ (total count * 5)) * 100
 - Round percentages to nearest whole number.
 
 Output JSON schema EXACT:
 {
   "mode": "call|chat|email",
-  "finalScore": 0-100,
-  "categoryScores": { "Language": 0-100, "Soft Skills": 0-100, "Process": 0-100 },
+  "finalScore": 0,
+  "categoryScores": { "Language": 0, "Soft Skills": 0, "Process": 0 },
   "parameterScores": [
-    { "category":"Language", "parameter":"...", "score":1-5, "reason":"..." }
+    { "category":"Language", "parameter":"...", "score":1, "reason":"..." }
   ],
   "errors": ["..."],
   "feedback": ["..."],
@@ -153,8 +183,8 @@ Output JSON schema EXACT:
       model: "gpt-4o-mini",
       temperature: 0.2,
       messages: [
-        { role: "system", content: SYSTEM },
-        { role: "user", content: USER }
+        { role: "system", content: SYSTEM.trim() },
+        { role: "user", content: USER.trim() }
       ],
       response_format: { type: "json_object" }
     });
@@ -168,17 +198,66 @@ Output JSON schema EXACT:
       return res.status(500).json({ error: "AI returned invalid JSON.", raw });
     }
 
-    // Add helpful debug metadata (optional)
+    // ✅ SERVER SIDE VALIDATION + AUTO-FIX PARAM NAMES
+    // If model slightly changes names ("Clarity" etc.), normalize and map.
+    const fixed = [];
+    const invalid = [];
+
+    const ps = Array.isArray(json.parameterScores) ? json.parameterScores : [];
+
+    for (const item of ps) {
+      const cat = item.category;
+      const paramRaw = item.parameter;
+      const score = Number(item.score);
+
+      if (!cat || !paramRaw) continue;
+
+      const mapped = allowedMap[norm(paramRaw)];
+      if (!mapped) {
+        invalid.push(paramRaw);
+        continue;
+      }
+
+      fixed.push({
+        category: cat,
+        parameter: mapped, // ✅ exact param name
+        score: score >= 1 && score <= 5 ? score : 3,
+        reason: String(item.reason || "").trim().slice(0, 250)
+      });
+    }
+
+    // ✅ Ensure all allowed params exist in output
+    // If missing, add default conservative scores
+    const existingSet = new Set(fixed.map(x => norm(x.parameter)));
+
+    for (const category of ["Language", "Soft Skills", "Process"]) {
+      for (const param of allowedParamsByCategory[category]) {
+        if (!existingSet.has(norm(param))) {
+          fixed.push({
+            category,
+            parameter: param,
+            score: 3,
+            reason: "Evidence is limited/unclear in the provided text, so a neutral score is given."
+          });
+        }
+      }
+    }
+
+    json.parameterScores = fixed;
+
+    // ✅ Add debug meta
     json.meta = {
       usingGuide,
+      invalidParamsReturnedByAI: invalid,
       paramsCount: {
-        Language: paramsForMode.Language.length,
-        "Soft Skills": paramsForMode["Soft Skills"].length,
-        Process: paramsForMode.Process.length
+        Language: allowedParamsByCategory.Language.length,
+        "Soft Skills": allowedParamsByCategory["Soft Skills"].length,
+        Process: allowedParamsByCategory.Process.length
       }
     };
 
     return res.json(json);
+
   } catch (err) {
     console.error("QA audit error:", err);
     return res.status(500).json({ error: "QA audit failed", details: err.message });
