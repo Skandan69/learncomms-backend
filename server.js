@@ -325,7 +325,22 @@ app.post("/api/speech-score", upload.single("audio"), async (req, res) => {
     }
 
     // ✅ Convert uploaded buffer into a file OpenAI can read
-    const audioFile = await toFile(req.file.buffer, "speech.webm");
+    function extFromMime(mime) {
+  if (!mime) return null;
+  if (mime.includes("mpeg") || mime.includes("mp3")) return "mp3";
+  if (mime.includes("wav")) return "wav";
+  if (mime.includes("mp4") || mime.includes("m4a")) return "m4a";
+  if (mime.includes("webm")) return "webm";
+  return null;
+}
+
+const originalName = (req.file.originalname || "").trim();
+const safeName = originalName.replace(/[^a-zA-Z0-9._-]/g, "_");
+
+const ext = extFromMime(req.file.mimetype);
+const finalName = ext ? `speech.${ext}` : (safeName || "speech.webm");
+
+const audioFile = await toFile(req.file.buffer, finalName);
 
     // 1️⃣ Speech-to-text (Transcription)
     const transcription = await client.audio.transcriptions.create({
@@ -499,6 +514,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
