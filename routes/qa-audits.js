@@ -15,6 +15,7 @@ function sanitizeParamsForMode(paramsState, mode) {
     Process: Array.isArray(modeObj.Process) ? modeObj.Process : []
   };
 
+  // remove empty strings
   for (const k of Object.keys(out)) {
     out[k] = out[k].map(x => String(x || "").trim()).filter(Boolean);
   }
@@ -33,6 +34,48 @@ function norm(s) {
     .trim()
     .toLowerCase()
     .replace(/\s+/g, " ");
+}
+
+function clampScore(n) {
+  const x = Number(n);
+  if (!x || x < 1) return 1;
+  if (x > 5) return 5;
+  return Math.round(x);
+}
+
+/* ===============================
+   SCORE RECOMPUTE
+================================ */
+function computePercent(scoreList) {
+  // scoreList = [1..5]
+  if (!scoreList.length) return 0;
+  const sum = scoreList.reduce((a, b) => a + b, 0);
+  const max = scoreList.length * 5;
+  return Math.round((sum / max) * 100);
+}
+
+function recomputeScores(parameterScores, allowedByCategory) {
+  const categoryScores = { Language: 0, "Soft Skills": 0, Process: 0 };
+
+  const langScores = [];
+  const softScores = [];
+  const procScores = [];
+
+  parameterScores.forEach(item => {
+    const cat = item.category;
+    if (cat === "Language") langScores.push(item.score);
+    else if (cat === "Soft Skills") softScores.push(item.score);
+    else if (cat === "Process") procScores.push(item.score);
+  });
+
+  categoryScores.Language = computePercent(langScores);
+  categoryScores["Soft Skills"] = computePercent(softScores);
+  categoryScores.Process = computePercent(procScores);
+
+  const all = [...langScores, ...softScores, ...procScores];
+  const finalScore = computePercent(all);
+
+  return { finalScore, categoryScores };
 }
 
 /* ===============================
@@ -57,7 +100,9 @@ router.post("/qa-audit-text", async (req, res) => {
       return res.status(400).json({ error: "Text too short. Please paste complete transcript/chat/email." });
     }
 
-    // Fallback params (if guide not sent)
+    /* ===============================
+       FALLBACK PARAMS
+    ================================ */
     const fallbackParams = {
       call: {
         Language: ["Grammar", "Fluency", "Pronunciation", "Vocabulary / Word choice"],
@@ -65,8 +110,8 @@ router.post("/qa-audit-text", async (req, res) => {
         Process: ["Resolution accuracy", "Process adherence / compliance"]
       },
       chat: {
-        Language: ["Grammar", "Sentence clarity (simple English)", "Tone / professional wording"],
-        "Soft Skills": ["Empathy & acknowledgement", "Ownership & accountability"],
+        Language: ["Grammar", "Sentence clarity (simple English)", "Spelling", "Punctuation", "Tone / professional wording"],
+        "Soft Skills": ["Greeting & opening", "Empathy & acknowledgement", "Ownership & accountability"],
         Process: ["Resolution accuracy", "Documentation / internal notes quality"]
       },
       email: {
@@ -82,6 +127,7 @@ router.post("/qa-audit-text", async (req, res) => {
 
     if (paramsState && typeof paramsState === "object") {
       const sanitized = sanitizeParamsForMode(paramsState, mode);
+
       const count =
         sanitized.Language.length +
         sanitized["Soft Skills"].length +
@@ -93,50 +139,55 @@ router.post("/qa-audit-text", async (req, res) => {
       }
     }
 
-    // ✅ Build strict allowed list of params (WHITELIST)
-    const allowedParamsByCategory = {
+    /* ===============================
+       WHITELIST (ALLOWED PARAMS)
+    ================================ */
+    const allowedByCategory = {
       Language: paramsForMode.Language || [],
       "Soft Skills": paramsForMode["Soft Skills"] || [],
       Process: paramsForMode.Process || []
     };
 
-    const allowedAllParams = [
-      ...allowedParamsByCategory.Language,
-      ...allowedParamsByCategory["Soft Skills"],
-      ...allowedParamsByCategory.Process
+    const allowedAll = [
+      ...allowedByCategory.Language,
+      ...allowedByCategory["Soft Skills"],
+      ...allowedByCategory.Process
     ];
 
-    // map normalized -> exact param name
+    // normalized->exact param name
     const allowedMap = {};
-    allowedAllParams.forEach(p => {
+    allowedAll.forEach(p => {
       allowedMap[norm(p)] = p;
     });
 
-    // Build rubric bundle for current mode
+    /* ===============================
+       RUBRIC BUNDLE
+    ================================ */
     let rubricBundle = {};
     if (usingGuide && rubricsState && typeof rubricsState === "object") {
       for (const category of ["Language", "Soft Skills", "Process"]) {
-        for (const param of paramsForMode[category] || []) {
+        for (const param of allowedByCategory[category] || []) {
           const r = getRubricForParam(rubricsState, mode, param);
           if (r) rubricBundle[param] = r;
         }
       }
     }
 
+    /* ===============================
+       PROMPT
+    ================================ */
     const SYSTEM = `
 You are a strict QA auditor for customer support communication.
 
 ABSOLUTE RULES:
-1) You MUST score ONLY the provided parameters.
-2) You MUST use parameter names EXACTLY as given in the allowed list.
-   - Do not rename
-   - Do not shorten
-   - Do not reword
-3) Score each parameter from 1 to 5.
-4) Use evidence from the conversation/email.
-5) If evidence is missing, score conservatively (2 or 3) and explain why.
-6) Return valid JSON only.
-`;
+- You MUST score ONLY the provided parameters.
+- You MUST use parameter names EXACTLY as given.
+- Do NOT rename/rephrase/shorten parameters.
+- Score each parameter 1 to 5.
+- Use evidence from the conversation/email.
+- If evidence is missing, score conservatively (2 or 3) and explain why.
+- Return valid JSON only.
+    `.trim();
 
     const USER = `
 Mode: ${mode}
@@ -146,28 +197,20 @@ Agent Name: ${agentName || ""}
 Conversation/Email:
 ${text}
 
-ALLOWED PARAMETERS BY CATEGORY (use these exact strings only):
-${JSON.stringify(allowedParamsByCategory, null, 2)}
+ALLOWED PARAMETERS BY CATEGORY (use exact strings):
+${JSON.stringify(allowedByCategory, null, 2)}
 
 RUBRICS:
 ${JSON.stringify(rubricBundle, null, 2)}
 
 OUTPUT REQUIREMENTS:
-- You must return parameterScores for ALL allowed parameters (no skipping).
-- Each parameter object must contain:
-  category, parameter, score, reason
-- "parameter" MUST EXACTLY match one string from the allowed list.
+- parameterScores MUST include ALL allowed parameters (no skipping).
+- Each parameter entry includes: category, parameter, score, reason.
+- Score must be integer 1-5.
 
-Scoring rules:
-- category% = (sum(scores)/ (count * 5)) * 100
-- finalScore% = (sum(all scores)/ (total count * 5)) * 100
-- Round percentages to nearest whole number.
-
-Output JSON schema EXACT:
+Return ONLY JSON in this schema:
 {
   "mode": "call|chat|email",
-  "finalScore": 0,
-  "categoryScores": { "Language": 0, "Soft Skills": 0, "Process": 0 },
   "parameterScores": [
     { "category":"Language", "parameter":"...", "score":1, "reason":"..." }
   ],
@@ -177,62 +220,69 @@ Output JSON schema EXACT:
     { "day":1, "task":"..." }
   ]
 }
-`;
+    `.trim();
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.2,
       messages: [
-        { role: "system", content: SYSTEM.trim() },
-        { role: "user", content: USER.trim() }
+        { role: "system", content: SYSTEM },
+        { role: "user", content: USER }
       ],
       response_format: { type: "json_object" }
     });
 
     const raw = completion.choices?.[0]?.message?.content || "{}";
 
-    let json;
+    let aiJson;
     try {
-      json = JSON.parse(raw);
+      aiJson = JSON.parse(raw);
     } catch (e) {
       return res.status(500).json({ error: "AI returned invalid JSON.", raw });
     }
 
-    // ✅ SERVER SIDE VALIDATION + AUTO-FIX PARAM NAMES
-    // If model slightly changes names ("Clarity" etc.), normalize and map.
+    /* ===============================
+       SERVER FIX-UP (MAKE PERFECT)
+    ================================ */
+    const invalidParamsReturnedByAI = [];
     const fixed = [];
-    const invalid = [];
 
-    const ps = Array.isArray(json.parameterScores) ? json.parameterScores : [];
+    const input = Array.isArray(aiJson.parameterScores) ? aiJson.parameterScores : [];
 
-    for (const item of ps) {
-      const cat = item.category;
-      const paramRaw = item.parameter;
-      const score = Number(item.score);
-
-      if (!cat || !paramRaw) continue;
+    for (const item of input) {
+      const category = String(item.category || "").trim();
+      const paramRaw = String(item.parameter || "").trim();
+      const reason = String(item.reason || "").trim();
 
       const mapped = allowedMap[norm(paramRaw)];
       if (!mapped) {
-        invalid.push(paramRaw);
+        invalidParamsReturnedByAI.push(paramRaw);
         continue;
       }
 
+      // ✅ force valid category (must be one of 3)
+      let finalCategory = category;
+      if (!["Language", "Soft Skills", "Process"].includes(finalCategory)) {
+        // try infer category from allowed lists
+        if (allowedByCategory.Language.includes(mapped)) finalCategory = "Language";
+        else if (allowedByCategory["Soft Skills"].includes(mapped)) finalCategory = "Soft Skills";
+        else finalCategory = "Process";
+      }
+
       fixed.push({
-        category: cat,
-        parameter: mapped, // ✅ exact param name
-        score: score >= 1 && score <= 5 ? score : 3,
-        reason: String(item.reason || "").trim().slice(0, 250)
+        category: finalCategory,
+        parameter: mapped,
+        score: clampScore(item.score),
+        reason: reason.slice(0, 280)
       });
     }
 
-    // ✅ Ensure all allowed params exist in output
-    // If missing, add default conservative scores
-    const existingSet = new Set(fixed.map(x => norm(x.parameter)));
+    // ✅ Ensure ALL allowed params exist
+    const existing = new Set(fixed.map(x => norm(x.parameter)));
 
     for (const category of ["Language", "Soft Skills", "Process"]) {
-      for (const param of allowedParamsByCategory[category]) {
-        if (!existingSet.has(norm(param))) {
+      for (const param of allowedByCategory[category] || []) {
+        if (!existing.has(norm(param))) {
           fixed.push({
             category,
             parameter: param,
@@ -243,20 +293,48 @@ Output JSON schema EXACT:
       }
     }
 
-    json.parameterScores = fixed;
+    // ✅ sort output exactly by category order + param order
+    const orderCategory = ["Language", "Soft Skills", "Process"];
+    const idxParam = {};
+    orderCategory.forEach(cat => {
+      (allowedByCategory[cat] || []).forEach((p, i) => {
+        idxParam[norm(p)] = i;
+      });
+    });
 
-    // ✅ Add debug meta
-    json.meta = {
-      usingGuide,
-      invalidParamsReturnedByAI: invalid,
-      paramsCount: {
-        Language: allowedParamsByCategory.Language.length,
-        "Soft Skills": allowedParamsByCategory["Soft Skills"].length,
-        Process: allowedParamsByCategory.Process.length
+    fixed.sort((a, b) => {
+      const ca = orderCategory.indexOf(a.category);
+      const cb = orderCategory.indexOf(b.category);
+      if (ca !== cb) return ca - cb;
+      return (idxParam[norm(a.parameter)] ?? 9999) - (idxParam[norm(b.parameter)] ?? 9999);
+    });
+
+    // ✅ recompute finalScore + categoryScores server-side
+    const { finalScore, categoryScores } = recomputeScores(fixed, allowedByCategory);
+
+    /* ===============================
+       FINAL OUTPUT
+    ================================ */
+    const output = {
+      mode,
+      finalScore,
+      categoryScores,
+      parameterScores: fixed,
+      errors: Array.isArray(aiJson.errors) ? aiJson.errors.slice(0, 15) : [],
+      feedback: Array.isArray(aiJson.feedback) ? aiJson.feedback.slice(0, 10) : [],
+      actionPlan: Array.isArray(aiJson.actionPlan) ? aiJson.actionPlan.slice(0, 7) : [],
+      meta: {
+        usingGuide,
+        invalidParamsReturnedByAI,
+        paramsCount: {
+          Language: allowedByCategory.Language.length,
+          "Soft Skills": allowedByCategory["Soft Skills"].length,
+          Process: allowedByCategory.Process.length
+        }
       }
     };
 
-    return res.json(json);
+    return res.json(output);
 
   } catch (err) {
     console.error("QA audit error:", err);
