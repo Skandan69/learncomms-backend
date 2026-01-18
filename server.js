@@ -10,7 +10,7 @@ const multer = require("multer");
 // ✅ ROUTE IMPORTS
 const scriptsRoutes = require("./routes/scripts");
 const qaAuditsRoutes = require("./routes/qa-audits");
-
+const qaAuditAudioRoutes = require("./routes/qa-audit-audio");
 dotenv.config();
 
 const app = express();
@@ -48,6 +48,7 @@ app.use("/api/sentence-intonation", require("./routes/intonation"));
 ========================= */
 app.use("/api/scripts", scriptsRoutes);
 app.use("/api", qaAuditsRoutes);
+app.use("/api", qaAuditAudioRoutes);
 /* =========================
    STATIC AUDIO (INTONATION)
 ========================= */
@@ -498,6 +499,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
