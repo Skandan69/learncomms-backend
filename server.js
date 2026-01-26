@@ -38,6 +38,16 @@ const client = new OpenAI({
 app.get("/", (req, res) => {
   res.send("LearnComms Backend is running 🚀");
 });
+/* =========================
+   VISITOR COUNTER
+========================= */
+
+let visitorCount = 0;
+
+app.get("/api/visit", (req, res) => {
+  visitorCount++;
+  res.json({ count: visitorCount });
+});
 
 /* =========================
    INTONATION ROUTE
@@ -516,6 +526,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
