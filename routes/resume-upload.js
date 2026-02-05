@@ -68,11 +68,10 @@ ${extractedText}
 
     let raw = response.choices[0].message.content.trim();
 
-    // Remove markdown if AI adds ```json
+    // Remove markdown if AI adds it
     raw = raw.replace(/```json|```/g, "");
 
     let data;
-
     try {
       data = JSON.parse(raw);
     } catch (e) {
