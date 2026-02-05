@@ -22,12 +22,12 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    let extractedText = "";
+    let text = "";
 
     // PDF
     if (req.file.mimetype === "application/pdf") {
-      const pdfData = await pdfParse(req.file.buffer);
-      extractedText = pdfData.text;
+      const data = await pdfParse(req.file.buffer);
+      text = data.text;
     }
 
     // DOCX
@@ -35,30 +35,22 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
       req.file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
-      const docResult = await mammoth.extractRawText({
+      const result = await mammoth.extractRawText({
         buffer: req.file.buffer
       });
-      extractedText = docResult.value;
+      text = result.value;
     }
 
     else {
       return res.status(400).json({ error: "Unsupported file type" });
     }
 
-    if (!extractedText || extractedText.length < 50) {
+    if (!text || text.length < 50) {
       return res.status(400).json({ error: "Could not read resume" });
     }
 
     const prompt = `
-You are a resume parser.
-
-Return ONLY valid JSON.
-
-Rules:
-- experience MUST be array of strings
-- skills MUST be array of strings
-
-Format exactly:
+Extract resume into JSON ONLY.
 
 {
  "name":"",
@@ -71,7 +63,7 @@ Format exactly:
 }
 
 Resume:
-${extractedText}
+${text}
 `;
 
     const response = await client.chat.completions.create({
@@ -80,14 +72,11 @@ ${extractedText}
       temperature: 0
     });
 
-    const raw = response.choices[0].message.content.trim();
-
     let parsed;
 
     try {
-      parsed = JSON.parse(raw);
+      parsed = JSON.parse(response.choices[0].message.content.trim());
     } catch {
-      console.error("AI JSON ERROR:", raw);
       return res.status(500).json({ error: "AI parsing failed" });
     }
 
