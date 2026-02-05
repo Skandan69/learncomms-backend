@@ -6,29 +6,16 @@ const OpenAI = require("openai");
 
 const router = express.Router();
 
-/* ======================
-   MULTER SETUP
-====================== */
-
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
-
-/* ======================
-   OPENAI CLIENT
-====================== */
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-/* ======================
-   UPLOAD ROUTE
-====================== */
-
 router.post("/upload-resume", upload.single("resume"), async (req, res) => {
-
   try {
 
     if (!req.file) {
@@ -37,63 +24,50 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
 
     let extractedText = "";
 
-    // =====================
     // PDF
-    // =====================
     if (req.file.mimetype === "application/pdf") {
-
       const pdfData = await pdfParse(req.file.buffer);
       extractedText = pdfData.text;
-
     }
 
-    // =====================
     // DOCX
-    // =====================
     else if (
       req.file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
-
-      const result = await mammoth.extractRawText({
+      const docResult = await mammoth.extractRawText({
         buffer: req.file.buffer
       });
+      extractedText = docResult.value;
+    }
 
-      extractedText = result.value;
-
-    } else {
-
-      return res.status(400).json({ error: "Unsupported file format" });
-
+    else {
+      return res.status(400).json({ error: "Unsupported file type" });
     }
 
     if (!extractedText || extractedText.length < 50) {
-      return res.status(400).json({ error: "Could not read resume text" });
+      return res.status(400).json({ error: "Could not read resume" });
     }
 
-    /* =====================
-       GPT PROMPT
-    ===================== */
-
     const prompt = `
-You are a professional resume parser.
+You are a resume parser.
 
 Return ONLY valid JSON.
 
-IMPORTANT:
-- experience must be an ARRAY OF STRINGS
-- skills must be an ARRAY OF STRINGS
+Rules:
+- experience MUST be array of strings
+- skills MUST be array of strings
 
 Format exactly:
 
 {
-  "name": "",
-  "role": "",
-  "email": "",
-  "phone": "",
-  "summary": "",
-  "experience": [],
-  "skills": []
+ "name":"",
+ "role":"",
+ "email":"",
+ "phone":"",
+ "summary":"",
+ "experience":[],
+ "skills":[]
 }
 
 Resume:
@@ -112,26 +86,17 @@ ${extractedText}
 
     try {
       parsed = JSON.parse(raw);
-    } catch (err) {
-
+    } catch {
       console.error("AI JSON ERROR:", raw);
-
-      return res.status(500).json({
-        error: "AI response could not be parsed"
-      });
+      return res.status(500).json({ error: "AI parsing failed" });
     }
 
-    return res.json(parsed);
+    res.json(parsed);
 
   } catch (err) {
-
     console.error("UPLOAD ERROR:", err);
-
-    return res.status(500).json({
-      error: "Resume processing failed"
-    });
+    res.status(500).json({ error: "Resume processing failed" });
   }
-
 });
 
 module.exports = router;
