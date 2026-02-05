@@ -61,6 +61,10 @@ app.use("/api/scripts", scriptsRoutes);
 app.use("/api", qaAuditsRoutes);
 app.use("/api", qaAuditAudioRoutes);
 app.use("/api", askLearnCommsRoutes);
+
+const resumeUploadRoutes = require("./routes/resume-upload");
+
+app.use("/api", resumeUploadRoutes);
 /* =========================
    STATIC AUDIO (INTONATION)
 ========================= */
@@ -526,6 +530,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
+
 
 
 
