@@ -28,9 +28,9 @@ const client = new OpenAI({
 ====================== */
 
 router.post("/upload-resume", upload.single("resume"), async (req, res) => {
+
   try {
 
-    // ✅ Check file
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
@@ -38,35 +38,37 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
     let extractedText = "";
 
     // =====================
-    // PDF HANDLING
+    // PDF
     // =====================
     if (req.file.mimetype === "application/pdf") {
 
       const pdfData = await pdfParse(req.file.buffer);
       extractedText = pdfData.text;
 
-    } 
+    }
+
     // =====================
-    // DOCX HANDLING
+    // DOCX
     // =====================
     else if (
       req.file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     ) {
 
-      const docResult = await mammoth.extractRawText({
+      const result = await mammoth.extractRawText({
         buffer: req.file.buffer
       });
 
-      extractedText = docResult.value;
+      extractedText = result.value;
 
     } else {
-      return res.status(400).json({ error: "Unsupported file type" });
+
+      return res.status(400).json({ error: "Unsupported file format" });
+
     }
 
-    // Safety
     if (!extractedText || extractedText.length < 50) {
-      return res.status(400).json({ error: "Could not read resume content" });
+      return res.status(400).json({ error: "Could not read resume text" });
     }
 
     /* =====================
@@ -74,11 +76,13 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
     ===================== */
 
     const prompt = `
-You are a resume parser.
+You are a professional resume parser.
 
-Extract information strictly into VALID JSON.
+Return ONLY valid JSON.
 
-Return ONLY JSON. No explanation.
+IMPORTANT:
+- experience must be an ARRAY OF STRINGS
+- skills must be an ARRAY OF STRINGS
 
 Format exactly:
 
@@ -92,7 +96,7 @@ Format exactly:
   "skills": []
 }
 
-Resume content:
+Resume:
 ${extractedText}
 `;
 
@@ -104,36 +108,30 @@ ${extractedText}
 
     const raw = response.choices[0].message.content.trim();
 
-    // =====================
-    // CLEAN JSON (important)
-    // =====================
-
     let parsed;
 
     try {
       parsed = JSON.parse(raw);
-    } catch (e) {
-      console.error("JSON PARSE FAILED:", raw);
+    } catch (err) {
+
+      console.error("AI JSON ERROR:", raw);
 
       return res.status(500).json({
-        error: "AI response parsing failed"
+        error: "AI response could not be parsed"
       });
     }
 
-    // =====================
-    // SEND RESULT
-    // =====================
-
-    res.json(parsed);
+    return res.json(parsed);
 
   } catch (err) {
 
-    console.error("RESUME UPLOAD ERROR:", err);
+    console.error("UPLOAD ERROR:", err);
 
-    res.status(500).json({
+    return res.status(500).json({
       error: "Resume processing failed"
     });
   }
+
 });
 
 module.exports = router;
