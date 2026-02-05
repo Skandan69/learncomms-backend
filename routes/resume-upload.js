@@ -1,5 +1,7 @@
 const express = require("express");
 const multer = require("multer");
+const pdfParse = require("pdf-parse");
+const mammoth = require("mammoth");
 const OpenAI = require("openai");
 
 const router = express.Router();
@@ -16,7 +18,28 @@ router.post("/import-resume", upload.single("resume"), async (req, res) => {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    const text = req.file.buffer.toString("utf8");
+    let extractedText = "";
+
+    // ===== PDF =====
+    if (req.file.mimetype === "application/pdf") {
+      const data = await pdfParse(req.file.buffer);
+      extractedText = data.text;
+    }
+
+    // ===== DOCX =====
+    else if (
+      req.file.mimetype.includes("word") ||
+      req.file.mimetype.includes("officedocument")
+    ) {
+      const result = await mammoth.extractRawText({
+        buffer: req.file.buffer
+      });
+      extractedText = result.value;
+    }
+
+    else {
+      return res.status(400).json({ error: "Unsupported file type" });
+    }
 
     const prompt = `
 Extract resume info and return ONLY valid JSON:
@@ -34,7 +57,7 @@ Extract resume info and return ONLY valid JSON:
 }
 
 Resume:
-${text}
+${extractedText}
 `;
 
     const response = await client.chat.completions.create({
@@ -43,9 +66,19 @@ ${text}
       temperature: 0
     });
 
-    const raw = response.choices[0].message.content.trim();
+    let raw = response.choices[0].message.content.trim();
 
-    const data = JSON.parse(raw);
+    // Remove markdown if AI adds ```json
+    raw = raw.replace(/```json|```/g, "");
+
+    let data;
+
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      console.error("AI JSON ERROR:", raw);
+      return res.status(500).json({ error: "AI parsing failed" });
+    }
 
     res.json(data);
 
