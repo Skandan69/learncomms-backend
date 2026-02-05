@@ -1,113 +1,110 @@
 const express = require("express");
+const router = express.Router();
 const multer = require("multer");
-const pdfParse = require("pdf-parse");
+const pdf = require("pdf-parse");
 const mammoth = require("mammoth");
 const OpenAI = require("openai");
 
-const router = express.Router();
-
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
 });
 
 const client = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-router.post("/upload-resume", upload.single("resume"), async (req, res) => {
+router.post("/import-resume", upload.single("resume"), async (req, res) => {
+
   try {
 
     if (!req.file) {
       return res.status(400).json({ error: "No file uploaded" });
     }
 
-    let text = "";
+    let extractedText = "";
 
-    // ===== PDF =====
+    // =====================
+    // PDF
+    // =====================
     if (req.file.mimetype === "application/pdf") {
-      const data = await pdfParse(req.file.buffer);
-      text = data.text;
+
+      const data = await pdf(req.file.buffer);
+      extractedText = data.text;
     }
 
-    // ===== DOCX =====
+    // =====================
+    // DOCX
+    // =====================
     else if (
-      req.file.mimetype ===
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      req.file.mimetype.includes("word") ||
+      req.file.mimetype.includes("officedocument")
     ) {
+
       const result = await mammoth.extractRawText({
         buffer: req.file.buffer
       });
-      text = result.value;
+
+      extractedText = result.value;
     }
 
     else {
-      return res.status(400).json({ error: "Unsupported file type" });
-    }
-
-    // Clean + limit text (VERY IMPORTANT)
-    text = text.replace(/\s+/g, " ").slice(0, 8000);
-
-    if (text.length < 100) {
-      return res.status(400).json({ error: "Could not read resume" });
+      return res.status(400).json({ error: "Unsupported file format" });
     }
 
     // =====================
-    // AI PROMPT
+    // SEND TO AI
     // =====================
 
     const prompt = `
-Extract resume into STRICT JSON only.
+You are a resume parser.
 
-Return ONLY valid JSON.
+Convert this resume into STRICT JSON only.
+
+Return EXACT structure:
 
 {
- "name":"",
- "role":"",
- "email":"",
- "phone":"",
- "summary":"",
- "experience":[],
- "skills":[]
+ "name": "",
+ "title": "",
+ "email": "",
+ "phone": "",
+ "summary": "",
+ "experience": [
+   {
+     "points": ["", "", ""]
+   }
+ ],
+ "skills": ["", "", ""]
 }
 
-Resume:
-${text}
+Resume text:
+${extractedText}
 `;
 
-    const response = await client.chat.completions.create({
+    const aiRes = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [{ role: "user", content: prompt }],
       temperature: 0
     });
 
-    let raw = response.choices[0].message.content.trim();
-
-    // ===== Remove markdown if AI adds =====
-    raw = raw.replace(/```json|```/g, "").trim();
+    const raw = aiRes.choices[0].message.content.trim();
 
     let parsed;
 
     try {
       parsed = JSON.parse(raw);
     } catch (e) {
-      console.error("BAD JSON:", raw);
-
-      return res.status(500).json({
-        error: "AI formatting failed"
-      });
+      console.error("AI JSON ERROR:", raw);
+      return res.status(500).json({ error: "AI parse failed" });
     }
 
     res.json(parsed);
 
   } catch (err) {
-
-    console.error("UPLOAD ERROR:", err);
-
-    res.status(500).json({
-      error: "Resume processing failed"
-    });
+    console.error("RESUME IMPORT ERROR:", err);
+    res.status(500).json({ error: "Resume import failed" });
   }
+
 });
 
 module.exports = router;
