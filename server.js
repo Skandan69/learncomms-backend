@@ -62,9 +62,6 @@ app.use("/api", qaAuditsRoutes);
 app.use("/api", qaAuditAudioRoutes);
 app.use("/api", askLearnCommsRoutes);
 
-const resumeUploadRoutes = require("./routes/resume-upload");
-
-app.use("/api", resumeUploadRoutes);
 /* =========================
    STATIC AUDIO (INTONATION)
 ========================= */
@@ -522,6 +519,71 @@ Return ONLY this exact format:
   }
 });
 
+const pdfParse = require("pdf-parse");
+
+/* =========================
+   AI RESUME IMPORT API
+========================= */
+
+app.post("/api/import-resume", upload.single("resume"), async (req, res) => {
+
+  try {
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // ---- Extract text from PDF ----
+    const pdfData = await pdfParse(req.file.buffer);
+    const resumeText = pdfData.text;
+
+    // ---- Send to OpenAI ----
+    const prompt = `
+You are a resume parser.
+
+Return STRICT JSON ONLY in this format:
+
+{
+  "name": "",
+  "title": "",
+  "email": "",
+  "phone": "",
+  "summary": "",
+  "experience": [
+    { "points": ["", ""] }
+  ],
+  "skills": ["", ""]
+}
+
+Resume text:
+${resumeText}
+`;
+
+    const aiRes = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0
+    });
+
+    const raw = aiRes.choices[0].message.content.trim();
+
+    let parsed;
+
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error("AI JSON ERROR:", raw);
+      return res.status(500).json({ error: "AI parsing failed" });
+    }
+
+    res.json(parsed);
+
+  } catch (err) {
+    console.error("RESUME IMPORT ERROR:", err);
+    res.status(500).json({ error: "Resume import failed" });
+  }
+
+});
 /* =========================
    START SERVER
 ========================= */
@@ -530,15 +592,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
 });
-
-
-
-
-
-
-
-
-
-
-
-
