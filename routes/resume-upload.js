@@ -24,13 +24,13 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
 
     let text = "";
 
-    // PDF
+    // ===== PDF =====
     if (req.file.mimetype === "application/pdf") {
       const data = await pdfParse(req.file.buffer);
       text = data.text;
     }
 
-    // DOCX
+    // ===== DOCX =====
     else if (
       req.file.mimetype ===
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
@@ -45,12 +45,21 @@ router.post("/upload-resume", upload.single("resume"), async (req, res) => {
       return res.status(400).json({ error: "Unsupported file type" });
     }
 
-    if (!text || text.length < 50) {
+    // Clean + limit text (VERY IMPORTANT)
+    text = text.replace(/\s+/g, " ").slice(0, 8000);
+
+    if (text.length < 100) {
       return res.status(400).json({ error: "Could not read resume" });
     }
 
+    // =====================
+    // AI PROMPT
+    // =====================
+
     const prompt = `
-Extract resume into JSON ONLY.
+Extract resume into STRICT JSON only.
+
+Return ONLY valid JSON.
 
 {
  "name":"",
@@ -72,19 +81,32 @@ ${text}
       temperature: 0
     });
 
+    let raw = response.choices[0].message.content.trim();
+
+    // ===== Remove markdown if AI adds =====
+    raw = raw.replace(/```json|```/g, "").trim();
+
     let parsed;
 
     try {
-      parsed = JSON.parse(response.choices[0].message.content.trim());
-    } catch {
-      return res.status(500).json({ error: "AI parsing failed" });
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      console.error("BAD JSON:", raw);
+
+      return res.status(500).json({
+        error: "AI formatting failed"
+      });
     }
 
     res.json(parsed);
 
   } catch (err) {
+
     console.error("UPLOAD ERROR:", err);
-    res.status(500).json({ error: "Resume processing failed" });
+
+    res.status(500).json({
+      error: "Resume processing failed"
+    });
   }
 });
 
