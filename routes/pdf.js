@@ -11,14 +11,30 @@ router.post("/generate-pdf", async (req, res) => {
       return res.status(400).json({ error: "HTML required" });
     }
 
+    console.log("PDF request received");
+    console.log("HTML length:", html.length);
+
     const browser = await puppeteer.launch({
-      args: ["--no-sandbox", "--disable-setuid-sandbox"]
+      headless: "new",
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH ||
+        process.env.CHROME_PATH ||
+        "/usr/bin/google-chrome" ||
+        "/usr/bin/chromium-browser",
+      args: [
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu"
+      ]
     });
+
+    console.log("Browser launched");
 
     const page = await browser.newPage();
 
     await page.setContent(html, {
-      waitUntil: "networkidle0"
+      waitUntil: "domcontentloaded" // ✅ safer than networkidle0
     });
 
     const pdf = await page.pdf({
