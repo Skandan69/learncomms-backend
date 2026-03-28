@@ -33,7 +33,7 @@ router.post("/generate-pdf", async (req, res) => {
 
     // ✅ Load HTML safely
     await page.setContent(html, {
-      waitUntil: "domcontentloaded"
+      waitUntil: "networkidle0"
     });
 
     // ✅ Generate PDF
