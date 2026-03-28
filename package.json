@@ -13,5 +13,6 @@
     "pdf-parse": "^1.1.1",
     "openai": "^4.56.0",
     "mammoth": "^1.6.0"
+    "puppeteer": "^22.0.0"
   }
 }
