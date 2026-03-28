@@ -14,6 +14,7 @@ const qaAuditAudioRoutes = require("./routes/qa-audit-audio");
 const askLearnCommsRoutes = require("./routes/ask-learncomms");
 const resumeUploadRoutes = require("./routes/resume-upload");
 const generateResumeRoutes = require("./routes/generate-resume");
+const pdfRoutes = require("./routes/pdf");
 dotenv.config();
 
 const app = express();
@@ -65,6 +66,7 @@ app.use("/api", qaAuditAudioRoutes);
 app.use("/api", askLearnCommsRoutes);
 app.use("/api", resumeUploadRoutes);
 app.use("/api", generateResumeRoutes);
+app.use("/api", pdfRoutes);
 
 /* =========================
    STATIC AUDIO (INTONATION)
