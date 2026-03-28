@@ -16,14 +16,15 @@ router.post("/generate-pdf", async (req, res) => {
     console.log("📄 PDF request received");
     console.log("HTML length:", html.length);
 
-    // 🚀 Launch Puppeteer (Render-safe config)
+    // 🚀 Launch Puppeteer (FINAL FIX)
     browser = await puppeteer.launch({
       headless: "new",
+      executablePath:
+        process.env.PUPPETEER_EXECUTABLE_PATH ||
+        puppeteer.executablePath(), // 🔥 fallback
       args: [
         "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu"
+        "--disable-setuid-sandbox"
       ]
     });
 
@@ -33,8 +34,11 @@ router.post("/generate-pdf", async (req, res) => {
 
     // ✅ Load HTML safely
     await page.setContent(html, {
-      waitUntil: "networkidle0"
+      waitUntil: "domcontentloaded"
     });
+
+    // ⏳ Small delay to ensure CSS loads
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // ✅ Generate PDF
     const pdf = await page.pdf({
@@ -50,10 +54,9 @@ router.post("/generate-pdf", async (req, res) => {
 
     console.log("✅ PDF generated");
 
-    // ✅ Close browser
     await browser.close();
 
-    // ✅ Send file
+    // ✅ Send PDF
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": "attachment; filename=resume.pdf"
@@ -62,18 +65,18 @@ router.post("/generate-pdf", async (req, res) => {
     res.send(pdf);
 
   } catch (err) {
-  console.error("❌ PDF ERROR FULL:", err);
-  console.error("❌ STACK:", err.stack);
+    console.error("❌ PDF ERROR FULL:", err);
+    console.error("❌ STACK:", err.stack);
 
-  if (browser) {
-    await browser.close();
+    if (browser) {
+      await browser.close();
+    }
+
+    res.status(500).json({
+      error: err.message,
+      stack: err.stack
+    });
   }
-
-  res.status(500).json({
-    error: err.message,
-    stack: err.stack
-  });
-}
 });
 
 module.exports = router;
