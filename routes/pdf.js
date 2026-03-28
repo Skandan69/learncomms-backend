@@ -4,6 +4,8 @@ const puppeteer = require("puppeteer");
 const router = express.Router();
 
 router.post("/generate-pdf", async (req, res) => {
+  let browser;
+
   try {
     const { html } = req.body;
 
@@ -11,16 +13,12 @@ router.post("/generate-pdf", async (req, res) => {
       return res.status(400).json({ error: "HTML required" });
     }
 
-    console.log("PDF request received");
+    console.log("📄 PDF request received");
     console.log("HTML length:", html.length);
 
-    const browser = await puppeteer.launch({
+    // 🚀 Launch Puppeteer (Render-safe config)
+    browser = await puppeteer.launch({
       headless: "new",
-      executablePath:
-        process.env.PUPPETEER_EXECUTABLE_PATH ||
-        process.env.CHROME_PATH ||
-        "/usr/bin/google-chrome" ||
-        "/usr/bin/chromium-browser",
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -29,21 +27,33 @@ router.post("/generate-pdf", async (req, res) => {
       ]
     });
 
-    console.log("Browser launched");
+    console.log("✅ Browser launched");
 
     const page = await browser.newPage();
 
+    // ✅ Load HTML safely
     await page.setContent(html, {
-      waitUntil: "domcontentloaded" // ✅ safer than networkidle0
+      waitUntil: "domcontentloaded"
     });
 
+    // ✅ Generate PDF
     const pdf = await page.pdf({
       format: "A4",
-      printBackground: true
+      printBackground: true,
+      margin: {
+        top: "10mm",
+        bottom: "10mm",
+        left: "10mm",
+        right: "10mm"
+      }
     });
 
+    console.log("✅ PDF generated");
+
+    // ✅ Close browser
     await browser.close();
 
+    // ✅ Send file
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": "attachment; filename=resume.pdf"
@@ -52,7 +62,12 @@ router.post("/generate-pdf", async (req, res) => {
     res.send(pdf);
 
   } catch (err) {
-    console.error("PDF ERROR:", err);
+    console.error("❌ PDF ERROR:", err);
+
+    if (browser) {
+      await browser.close();
+    }
+
     res.status(500).json({ error: "PDF generation failed" });
   }
 });
