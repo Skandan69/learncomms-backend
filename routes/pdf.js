@@ -16,15 +16,15 @@ router.post("/generate-pdf", async (req, res) => {
     console.log("📄 PDF request received");
     console.log("HTML length:", html.length);
 
-    // 🚀 Launch Puppeteer (FINAL FIX)
+    // 🚀 Launch Puppeteer (Render-safe, NO Chrome path issues)
     browser = await puppeteer.launch({
-      headless: "new",
-      executablePath:
-        process.env.PUPPETEER_EXECUTABLE_PATH ||
-        puppeteer.executablePath(), // 🔥 fallback
+      headless: true,
       args: [
         "--no-sandbox",
-        "--disable-setuid-sandbox"
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--no-zygote",
+        "--single-process"
       ]
     });
 
@@ -32,12 +32,12 @@ router.post("/generate-pdf", async (req, res) => {
 
     const page = await browser.newPage();
 
-    // ✅ Load HTML safely
+    // ✅ Set content
     await page.setContent(html, {
       waitUntil: "domcontentloaded"
     });
 
-    // ⏳ Small delay to ensure CSS loads
+    // ⏳ Wait for CSS/fonts to load
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // ✅ Generate PDF
@@ -56,7 +56,7 @@ router.post("/generate-pdf", async (req, res) => {
 
     await browser.close();
 
-    // ✅ Send PDF
+    // ✅ Send response
     res.set({
       "Content-Type": "application/pdf",
       "Content-Disposition": "attachment; filename=resume.pdf"
