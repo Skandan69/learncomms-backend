@@ -62,14 +62,18 @@ router.post("/generate-pdf", async (req, res) => {
     res.send(pdf);
 
   } catch (err) {
-    console.error("❌ PDF ERROR:", err);
+  console.error("❌ PDF ERROR FULL:", err);
+  console.error("❌ STACK:", err.stack);
 
-    if (browser) {
-      await browser.close();
-    }
-
-    res.status(500).json({ error: "PDF generation failed" });
+  if (browser) {
+    await browser.close();
   }
+
+  res.status(500).json({
+    error: err.message,
+    stack: err.stack
+  });
+}
 });
 
 module.exports = router;
