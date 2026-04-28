@@ -89,6 +89,34 @@ router.post("/qa-audit-audio", upload.single("audio"), async (req, res) => {
     });
 
     const transcript = safeText(transcription.text);
+     /* =========================
+   1.5) LABEL SPEAKERS (CRITICAL FIX)
+========================= */
+
+const labelingPrompt = `
+Convert the following call transcript into a conversation with clear speaker labels.
+
+Rules:
+- Label each line as either "Agent:" or "Customer:"
+- Split sentences logically into turns
+- Do NOT summarize
+- Do NOT change wording
+- Keep original meaning intact
+
+Transcript:
+${transcript}
+`;
+
+const labeledResponse = await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  temperature: 0,
+  messages: [
+    { role: "system", content: "You label speakers in conversations." },
+    { role: "user", content: labelingPrompt }
+  ]
+});
+
+const labeledTranscript = labeledResponse.choices?.[0]?.message?.content || transcript;
 
     if (!transcript) {
       return res.json({
@@ -167,7 +195,7 @@ Evaluator Name: ${evaluatorName}
 Agent Name: ${agentName}
 
 Call Transcript:
-${transcript}
+${labeledTranscript}
 
 IMPORTANT INSTRUCTIONS:
 
@@ -243,7 +271,7 @@ Output JSON schema EXACT:
     }
 
     // ✅ Always attach real transcript
-    json.transcript = transcript;
+    json.transcript = labeledTranscript;
 
     // ✅ Helpful meta
     json.meta = {
