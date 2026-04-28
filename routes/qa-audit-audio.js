@@ -176,17 +176,40 @@ const labeledTranscript = labeledResponse.choices?.[0]?.message?.content || tran
     /* =========================
        3) SCORE USING GPT (STRICT)
     ========================= */
-    const SYSTEM = `
-You are a strict QA evaluator for customer support calls.
+ const SYSTEM = `
+You are a strict QA auditor used in corporate call centers.
 
-CRITICAL RULES:
-- Follow provided Parameters strictly.
-- If Rubrics exist for a parameter, you MUST follow the rubric meanings exactly.
-- Score each parameter 1–5 integer.
-- Do NOT invent parameters.
-- Do NOT add extra fields.
-- Return valid JSON only.
-- Accent must NOT be penalized; focus on clarity and professionalism.
+SCORING PHILOSOPHY:
+- Start from a neutral score (3/5), NOT 5/5
+- Increase score only if clearly demonstrated
+- Reduce score for ANY issue (even minor)
+
+STRICT RULES:
+- DO NOT give 5/5 unless truly exceptional (rare)
+- Most real agents score between 2–4
+- Identify small issues:
+  - Robotic tone
+  - Lack of empathy
+  - Missed probing questions
+  - Weak ownership
+  - Incomplete closing
+  - No personalization
+
+AGENT-ONLY RULE:
+- Evaluate ONLY the Agent
+- Ignore Customer completely
+
+EVALUATION DEPTH:
+- Each parameter MUST include:
+  - Specific evidence from transcript
+  - What was missing
+  - Why score is not higher
+
+REAL QA BEHAVIOR:
+- Even “good calls” should not exceed 85–90%
+- A perfect 100% should be extremely rare
+
+Return valid JSON only.
 `;
 
 const USER = `
@@ -220,7 +243,16 @@ IMPORTANT INSTRUCTIONS:
    - Do NOT fail
 
 6. Be strict and evidence-based
+7. You MUST identify at least 2–3 improvement areas:
+   - Even if the call seems good
+   - Do not say "everything is perfect"
 
+8. If no issues are obvious:
+   - Look deeper for:
+     - tone improvement
+     - better phrasing
+     - stronger empathy
+     - better closing
 Parameters:
 ${JSON.stringify(paramsForMode, null, 2)}
 
@@ -272,7 +304,40 @@ Output JSON schema EXACT:
 
     // ✅ Always attach real transcript
     json.transcript = labeledTranscript;
+    /* =========================
+   🔥 FORCE REALISTIC SCORING
+========================= */
+if (Array.isArray(json.parameterScores)) {
 
+  let total = 0;
+
+  json.parameterScores = json.parameterScores.map(p => {
+    let score = Number(p.score) || 3;
+
+    // 🚫 Prevent easy 5s
+    if (score === 5) {
+      score = 4; // downgrade perfect scores
+    }
+
+    // ensure valid range
+    if (score < 1) score = 1;
+    if (score > 5) score = 4;
+
+    total += score;
+
+    return { ...p, score };
+  });
+
+  const count = json.parameterScores.length || 1;
+  const finalScore = Math.round((total / (count * 5)) * 100);
+
+  json.finalScore = finalScore;
+
+  // 🚫 cap unrealistic perfect scores
+  if (json.finalScore > 92) {
+    json.finalScore = 88;
+  }
+}
     // ✅ Helpful meta
     json.meta = {
       usingGuide,
