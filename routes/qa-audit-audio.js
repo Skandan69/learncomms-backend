@@ -161,13 +161,38 @@ CRITICAL RULES:
 - Accent must NOT be penalized; focus on clarity and professionalism.
 `;
 
-    const USER = `
+const USER = `
 Mode: call
 Evaluator Name: ${evaluatorName}
 Agent Name: ${agentName}
 
 Call Transcript:
 ${transcript}
+
+IMPORTANT INSTRUCTIONS:
+
+1. The conversation contains TWO speakers:
+   - Agent (support representative)
+   - Customer
+
+2. You MUST identify the AGENT automatically:
+   - Agent usually introduces themselves
+   - Agent provides help, solutions, guidance
+   - Agent asks structured questions
+   - Customer asks for help or raises issues
+
+3. If unclear:
+   - Assume the person providing support is the AGENT
+
+4. ONLY evaluate the AGENT:
+   - Ignore customer grammar, tone, or mistakes
+
+5. If speaker roles are unclear:
+   - Still attempt best possible inference
+   - Do NOT fail
+
+6. Be strict and evidence-based
+`;
 
 Parameters:
 ${JSON.stringify(paramsForMode, null, 2)}
