@@ -192,7 +192,6 @@ IMPORTANT INSTRUCTIONS:
    - Do NOT fail
 
 6. Be strict and evidence-based
-`;
 
 Parameters:
 ${JSON.stringify(paramsForMode, null, 2)}
