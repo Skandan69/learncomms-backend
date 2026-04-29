@@ -313,23 +313,66 @@ Scoring rules:
 - finalScore % = (sum(all scores)/(total*5))*100
 - Round all % to nearest whole number.
 
+You MUST also identify key agent sentences:
+
+- Extract 3–6 important agent lines
+- Highlight:
+  - Mistakes (grammar, tone, process)
+  - Good behaviors (empathy, clarity)
+
+Rules:
+- ONLY include Agent lines
+- Copy exact sentence from transcript
+- Do NOT summarize
+
+Return them in "lineFeedback"
+
+CRITICAL:
+- "lineFeedback" MUST be present
+- It MUST contain at least 3 items
+- DO NOT return empty array
+- DO NOT skip this field
+
 Output JSON schema EXACT:
 {
   "mode": "call",
   "transcript": "",
   "finalScore": 0,
-  "categoryScores": { "Language": 0, "Soft Skills": 0, "Process": 0 },
+  "categoryScores": {
+    "Language": 0,
+    "Soft Skills": 0,
+    "Process": 0
+  },
   "parameterScores": [
-    { "category":"Language", "parameter":"...", "score":1, "reason":"..." }
+    {
+      "category": "Language",
+      "parameter": "...",
+      "score": 1,
+      "reason": "..."
+    }
   ],
   "errors": ["..."],
   "feedback": ["..."],
   "actionPlan": [
-    { "day":1, "task":"..." }
+    {
+      "day": 1,
+      "task": "..."
+    }
+  ],
+  "lineFeedback": [
+    {
+      "text": "Agent sentence here",
+      "issue": "Grammar / Tone / Process",
+      "type": "error"
+    },
+    {
+      "text": "Agent sentence here",
+      "issue": "Good communication",
+      "type": "good"
+    }
   ]
 }
 `;
-
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.2,
@@ -345,6 +388,16 @@ Output JSON schema EXACT:
     let json;
     try {
       json = JSON.parse(raw);
+       // ✅ fallback if AI misses lineFeedback
+if (!Array.isArray(json.lineFeedback) || json.lineFeedback.length === 0) {
+  json.lineFeedback = [
+    {
+      text: "No specific line detected",
+      issue: "AI could not extract key moments",
+      type: "error"
+    }
+  ];
+}
     } catch (e) {
       return res.status(500).json({ error: "AI returned invalid JSON.", raw });
     }
