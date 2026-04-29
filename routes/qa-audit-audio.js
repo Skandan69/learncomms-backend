@@ -118,6 +118,40 @@ const labeledResponse = await openai.chat.completions.create({
 
 const labeledTranscript = labeledResponse.choices?.[0]?.message?.content || transcript;
 
+     /* =========================
+   🎤 SPEECH QUALITY ANALYSIS
+========================= */
+const speechAnalysisRes = await openai.chat.completions.create({
+  model: "gpt-4o-mini",
+  temperature: 0.2,
+  messages: [
+    {
+      role: "system",
+      content: "You are a speech and pronunciation coach."
+    },
+    {
+      role: "user",
+      content: `
+Analyze the agent's speech quality from this call transcript.
+
+Focus on:
+- Fluency (pauses, smoothness)
+- Pronunciation clarity (assume based on wording)
+- Accent influence (if noticeable)
+- Tone (monotone, engaging, robotic)
+
+Transcript:
+${labeledTranscript}
+
+Return 4–5 bullet points only.
+`
+    }
+  ]
+});
+
+const speechFeedback =
+  speechAnalysisRes.choices?.[0]?.message?.content || "";
+     
     if (!transcript) {
       return res.json({
         mode: "call",
@@ -259,6 +293,19 @@ ${JSON.stringify(paramsForMode, null, 2)}
 Rubrics (if provided for some parameters):
 ${JSON.stringify(rubricBundle, null, 2)}
 
+Grammar evaluation must include:
+- Tense accuracy
+- Subject-verb agreement
+- Articles usage (a/an/the)
+- Prepositions
+
+If errors exist:
+- Quote exact sentence from transcript
+- Explain what is wrong
+
+If no major errors:
+- Still identify at least 1 minor improvement area
+
 Scoring rules:
 - Score each parameter: 1–5 (integer)
 - Provide a reason per parameter (evidence-based, 1–2 lines)
@@ -339,7 +386,8 @@ if (Array.isArray(json.parameterScores)) {
   }
 }
     // ✅ Helpful meta
-    json.meta = {
+    json.speechFeedback = speechFeedback;
+     json.meta = {
       usingGuide,
       receivedAudioName: req.file.originalname,
       sizeBytes: req.file.size,
